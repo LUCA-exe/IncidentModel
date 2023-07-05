@@ -67,6 +67,18 @@ def get_loaded_json_file(path):
         return json.load(fp)
 
 # _v2
+def set_up_logging():
+  """Util function to set up the logging
+
+    Args:
+
+    Attributes:
+        
+    """ 
+  logging.basicConfig(filename='logs/app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+
+
+# _v2
 def load_images_from_json(file_path="multi_label_train.json", folder_path=None):
   """Util function to download the images from a json file (checking errors) in a directory
 

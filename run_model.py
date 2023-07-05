@@ -22,6 +22,7 @@ import time
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
+import logging
 
 cudnn.benchmark = True
 
@@ -137,7 +138,8 @@ writer = None
 
 # _v2 - start the 'refactoring'
 def main_v2():
-  #
+  args = parser.parse_args()
+  dataset = IncidentDataset_v2()
 
 def main():
     global best_mean_ap, parser, writer
@@ -281,4 +283,5 @@ def main():
 if __name__ == "__main__":
     main()
     # _v2
+    main_v2()
 
