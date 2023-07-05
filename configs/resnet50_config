@@ -1,0 +1,10 @@
+batch_size=16
+lr=0.0001
+dataset=pos_and_neg
+activation=sigmoid
+epochs=20
+arch=resnet50
+pretrained_with_places=False
+dataset_train=./data/new_multi_label_train.json
+dataset_val=./data/new_multi_label_val.json
+dataset_test=./data/new_multi_label_val.json
