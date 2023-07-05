@@ -1,6 +1,7 @@
-"""parser.py
+"""
+parser.py
 
-Code to get the config parser.
+- Configuration of the parameters.
 """
 import configargparse
 

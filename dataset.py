@@ -1,6 +1,7 @@
-"""dataset.py
+"""
+dataset.py
 
-Code to use the datasets.
+- Parse the dataset argument (from .json)
 """
 
 import random
@@ -18,7 +19,8 @@ from torchvision.datasets import CIFAR100
 from utils import (
     get_place_to_index_mapping,
     get_incident_to_index_mapping,
-    get_loaded_json_file
+    get_loaded_json_file,
+    load_images_from_json
 )
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
@@ -155,6 +157,24 @@ class TestDataset(Dataset):
         my_item[0] = img
         return my_item
 
+# _v2
+class IncidentDataset_v2(Dataset):
+  """A Pytorch dataset for classification of incidents images with incident and place.
+
+    Args:
+        incidents_images (dict): Images that are part of our dataset.
+        place_to_index_mapping (dict):
+        incident_to_index_mapping (dict):
+
+    Attributes:
+        place_names (list): List of the place names.
+        place_name_to_idx (dict): Dict with items (place_name, index).
+        incident_name (list): List of the incident names.
+        incident_name_to_idx (dict): Dict with items (incident_name, index).
+    """ 
+  def __init__(self):
+    load_images_from_json()
+    
 
 class IncidentDataset(Dataset):
     """A Pytorch dataset for classification of incidents images with incident and place.

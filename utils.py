@@ -1,6 +1,7 @@
-"""utils.py
+"""
+utils.py
 
-Helping code for rest of repo.
+- Info/Debug functions 
 """
 
 import pickle
@@ -8,6 +9,7 @@ import os
 import shutil
 import torch
 import json
+import logging
 
 
 def get_place_to_index_mapping():
@@ -63,3 +65,28 @@ def save_checkpoint(state,
 def get_loaded_json_file(path):
     with open(path, "r") as fp:
         return json.load(fp)
+
+# _v2
+def load_images_from_json(file_path="multi_label_train.json", folder_path=None):
+  """Util function to download the images from a json file (checking errors) in a directory
+
+    Args:
+        file_path (str): Path of the json file
+        folder_path (str): Path of the folder (to save the images)
+
+    Attributes:
+        
+    """ 
+  if folder_path is None:
+        folder_path = os.getcwd()
+        
+    else:
+        print("Variable is not None.")
+  with open(file_path) as json_file:
+    data = json.load(json_file)
+
+    for row in data:
+      print(type(row))
+      print(row.keys())
+      exit(1)
+  

@@ -135,6 +135,9 @@ best_mean_ap = None
 parser = get_parser()
 writer = None
 
+# _v2 - start the 'refactoring'
+def main_v2():
+  #
 
 def main():
     global best_mean_ap, parser, writer
@@ -277,3 +280,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # _v2
+
