@@ -7,7 +7,7 @@ Helpful resources:
     - https://github.com/pytorch/examples/blob/master/imagenet/main.py
 """
 
-from utils import save_checkpoint
+from utils import save_checkpoint, set_up_logging
 from dataset import get_dataset
 from parser import get_parser, get_postprocessed_args
 from loss import get_loss
@@ -139,6 +139,7 @@ writer = None
 # _v2 - start the 'refactoring'
 def main_v2():
   args = parser.parse_args()
+  set_up_logging()
   dataset = IncidentDataset_v2()
 
 def main():

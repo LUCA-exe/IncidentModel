@@ -10,6 +10,8 @@ import shutil
 import torch
 import json
 import logging
+from datetime import datetime
+from pathlib import Path
 
 
 def get_place_to_index_mapping():
@@ -75,11 +77,35 @@ def set_up_logging():
     Attributes:
         
     """ 
-  logging.basicConfig(filename='logs/app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+  log_folder_path = "Logs"
+  if not log_folder_path.exists():
+    log_folder_path.mkdir(parents=True)
+    print("Logs folder created.")
+  else:
+    print("Logs folder already exists.")
 
+  # Get the current date and time
+  current_datetime = datetime.now()
+  # Extract the date, hour, and minute components as strings
+  current_date = current_datetime.strftime("%Y-%m-%d")
+  current_hour = current_datetime.strftime("%H")
+  current_minute = current_datetime.strftime("%M")
+  log_file_name = f"app_{current_date}_{current_hour}_{current_minute}.log"
+
+  # Create the file path
+  file_path = Path(log_folder_path) / log_file_name
+  file_path_str = str(file_path)
+
+  # Save the file
+  try:
+    logging.basicConfig(filename=file_path_str, filemode='w', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+  except AssertionError as error:
+    print(f"Can't create log file >>> Error: {error}")
+  
+  return
 
 # _v2
-def load_images_from_json(file_path="multi_label_train.json", folder_path=None):
+def download_images_from_json(file_path="multi_label_train.json", folder_path=None):
   """Util function to download the images from a json file (checking errors) in a directory
 
     Args:
@@ -88,12 +114,13 @@ def load_images_from_json(file_path="multi_label_train.json", folder_path=None):
 
     Attributes:
         
-    """ 
+    """
+  # Defined the name of the folder as the name of the images file
+  images_folder = file_path.split(".")[-2]
+  logging.debug("Folder for the images: {images_folder}")
   if folder_path is None:
-        folder_path = os.getcwd()
-        
-    else:
-        print("Variable is not None.")
+    folder_path = Path(images_folder) 
+
   with open(file_path) as json_file:
     data = json.load(json_file)
 

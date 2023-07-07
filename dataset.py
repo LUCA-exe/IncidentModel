@@ -159,7 +159,7 @@ class TestDataset(Dataset):
 
 # _v2
 class IncidentDataset_v2(Dataset):
-  """A Pytorch dataset for classification of incidents images with incident and place.
+  """A Pytorch dataset for classification of multi-labels: incidents images with incident and place.
 
     Args:
         incidents_images (dict): Images that are part of our dataset.
@@ -173,7 +173,7 @@ class IncidentDataset_v2(Dataset):
         incident_name_to_idx (dict): Dict with items (incident_name, index).
     """ 
   def __init__(self):
-    load_images_from_json()
+    download_images_from_json()
     
 
 class IncidentDataset(Dataset):
