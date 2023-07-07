@@ -8,13 +8,13 @@ Helpful resources:
 """
 
 from utils import save_checkpoint, set_up_logging
-from dataset import get_dataset
+from dataset import get_dataset, IncidentDataset_v2
 from parser import get_parser, get_postprocessed_args
 from loss import get_loss
 import architectures as architectures
 from metrics import AverageMeter, accuracy, validate
 from datetime import datetime
-from tensorboardX import SummaryWriter
+#from tensorboardX import SummaryWriter
 from torch.nn import functional as F
 import os
 import pprint
@@ -282,7 +282,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
     # _v2
     main_v2()
 

@@ -77,7 +77,7 @@ def set_up_logging():
     Attributes:
         
     """ 
-  log_folder_path = "Logs"
+  log_folder_path = Path("Logs")
   if not log_folder_path.exists():
     log_folder_path.mkdir(parents=True)
     print("Logs folder created.")
@@ -90,7 +90,7 @@ def set_up_logging():
   current_date = current_datetime.strftime("%Y-%m-%d")
   current_hour = current_datetime.strftime("%H")
   current_minute = current_datetime.strftime("%M")
-  log_file_name = f"app_{current_date}_{current_hour}_{current_minute}.log"
+  log_file_name = f"log_{current_date}_{current_hour}_{current_minute}.log"
 
   # Create the file path
   file_path = Path(log_folder_path) / log_file_name
@@ -117,13 +117,21 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
     """
   # Defined the name of the folder as the name of the images file
   images_folder = file_path.split(".")[-2]
-  logging.debug("Folder for the images: {images_folder}")
+  logging.debug(f"Folder for the images: {images_folder}")
+  # Change the folder path if is not provided
   if folder_path is None:
     folder_path = Path(images_folder) 
 
+  if not folder_path.exists():
+    folder_path.mkdir(parents=True)
+    print("Images folder created.")
+  else:
+    print("Images folder already exists.")
+
   with open(file_path) as json_file:
     data = json.load(json_file)
-
+    print(type(data))
+    print(data.keys())
     for row in data:
       print(type(row))
       print(row.keys())

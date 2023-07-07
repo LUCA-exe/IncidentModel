@@ -46,7 +46,7 @@ def get_parser():
 
     # TODO: make sure to use this
     parser.add_argument("--images_path",
-                        default="data/images/",
+                        default="images/",
                         help="Path to the downloaded images.")
 
     parser.add_argument("--dataset_train",

@@ -20,7 +20,7 @@ from utils import (
     get_place_to_index_mapping,
     get_incident_to_index_mapping,
     get_loaded_json_file,
-    load_images_from_json
+    download_images_from_json
 )
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
