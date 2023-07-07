@@ -27,7 +27,7 @@ CHOICES_LOSSES = [
 
 
 def get_parser():
-    parser = configargparse.ArgumentParser(description="Incident Model Parser.")
+    parser = configargparse.ArgumentParser(description="Incident Model Parser")
     parser.add_argument('-c',
                         '--config',
                         required=True,
@@ -50,9 +50,11 @@ def get_parser():
                         help="Path to the downloaded images.")
 
     parser.add_argument("--dataset_train",
-                        default="data/eccv_train.json")
+                        default="data/multi_label_train.json")
     parser.add_argument("--dataset_val",
-                        default="data/eccv_val.json")
+                        default="data/multi_label_val.json")
+
+    # Deprecated: val is the actual "test"
     parser.add_argument("--dataset_test",
                         default="data/eccv_test.json")
 
@@ -133,9 +135,11 @@ def get_parser():
     parser.add_argument('--num-places',
                         default=49,
                         type=int,
-                        help='num of class in the model')
+                        help='Num of places classes')
     parser.add_argument('--num-incidents',
-                        default=43, type=int)
+                        default=43, 
+                        type=int,
+                        help='Num of incidents classes')
     parser.add_argument('--fc-dim',
                         default=1024,
                         type=int,
