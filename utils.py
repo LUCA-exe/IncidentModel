@@ -75,7 +75,7 @@ def save_dict_to_json(dictionary, file_path):
   with open(file_path, 'w') as file:
     json.dump(dictionary, file, indent=4)
 
-  logging.debug("Dictionary saved as JSON file at:", file_path)
+  logging.debug(f"Dictionary saved as JSON file at: {file_path}")
 
 # _v2
 def set_up_logging():
@@ -113,17 +113,6 @@ def set_up_logging():
   
   return
 
-def download_image(folder_path):
-  """Util function to download the image (checking if the file is available)
-
-    Args:
-        file_path (str): Path of the json file
-        folder_path (str): Path of the folder (to save the images)
-
-    Attributes:
-        
-    """
-
 # _v2
 def download_images_from_json(file_path="multi_label_train.json", folder_path=None):
   """Util function to download the images from a json file (checking errors) in a directory.
@@ -139,10 +128,10 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
     """
   # Update the folder path if is not provided
   if folder_path is None:
-    directory, images_folder = os.path.split(file_path)# Defined the name of the folder as the name of the images file
-    folder_name = Path(images_folder) 
+    directory, file_name = os.path.split(file_path)# Defined the name of the folder as the name of the images file
+    folder_name = Path(file_name.split(".")[0]) 
   
-  logging.debug(f"Name of the images folder: {images_folder}")
+  logging.debug(f"Name of the images folder: {folder_name}")
 
   if not folder_name.exists():
     folder_name.mkdir(parents=True)
@@ -171,9 +160,11 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
         with open(file_path, 'wb') as file:
           file.write(requests.get(values["url"]).content)
       else:
-        logging.debug(f"Imag not available from url: {values['url']}")
+        logging.debug(f"Image not available from url: {values['url']}")
       
       if count == artificial_limit:
         # SAVE the cleaned_data as new file in the location of the original file
+        new_file_path = os.path.join(directory, "cleaned_" + file_name)
+        save_dict_to_json(cleaned_data, new_file_path)
         exit(1)
   
