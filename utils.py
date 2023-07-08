@@ -71,6 +71,13 @@ def get_loaded_json_file(path):
         return json.load(fp)
 
 # _v2
+def save_dict_to_json(dictionary, file_path):
+  with open(file_path, 'w') as file:
+    json.dump(dictionary, file, indent=4)
+
+  logging.debug("Dictionary saved as JSON file at:", file_path)
+
+# _v2
 def set_up_logging():
   """Util function to set up the logging
 
@@ -157,7 +164,7 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
 
       if response.ok: #Checking for availability
         image_name = image_name.replace("/", "_")
-        cleaned_data[image_name] = values
+        cleaned_data[image_name] = values # Update new dict of the image can be downloaded
         file_path = os.path.join(directory, folder_name, image_name)
         print(image_name)
         print(file_path)
@@ -167,6 +174,6 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
         logging.debug(f"Imag not available from url: {values['url']}")
       
       if count == artificial_limit:
-        # SAVE the cleaned_data as new file
+        # SAVE the cleaned_data as new file in the location of the original file
         exit(1)
   
