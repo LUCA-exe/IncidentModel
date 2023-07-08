@@ -2,6 +2,7 @@
 utils.py
 
 - Info/Debug functions 
+- Parsing functions
 """
 
 import pickle
@@ -12,6 +13,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+import requests
 
 
 def get_place_to_index_mapping():
@@ -104,9 +106,8 @@ def set_up_logging():
   
   return
 
-# _v2
-def download_images_from_json(file_path="multi_label_train.json", folder_path=None):
-  """Util function to download the images from a json file (checking errors) in a directory
+def download_image(folder_path):
+  """Util function to download the image (checking if the file is available)
 
     Args:
         file_path (str): Path of the json file
@@ -115,25 +116,57 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
     Attributes:
         
     """
-  # Defined the name of the folder as the name of the images file
-  images_folder = file_path.split(".")[-2]
-  logging.debug(f"Folder for the images: {images_folder}")
-  # Change the folder path if is not provided
-  if folder_path is None:
-    folder_path = Path(images_folder) 
 
-  if not folder_path.exists():
-    folder_path.mkdir(parents=True)
+# _v2
+def download_images_from_json(file_path="multi_label_train.json", folder_path=None):
+  """Util function to download the images from a json file (checking errors) in a directory.
+     It will create a new "cleaned" json file contained in the location of the original one.
+     The images will be donwloaded in a new directory in the folder of the json file 
+
+    Args:
+        file_path (str): Path of the json file
+        folder_path (str): Path of the folder (to save the images)
+
+    Attributes:
+        
+    """
+  # Update the folder path if is not provided
+  if folder_path is None:
+    directory, images_folder = os.path.split(file_path)# Defined the name of the folder as the name of the images file
+    folder_name = Path(images_folder) 
+  
+  logging.debug(f"Name of the images folder: {images_folder}")
+
+  if not folder_name.exists():
+    folder_name.mkdir(parents=True)
     print("Images folder created.")
   else:
     print("Images folder already exists.")
 
+  #DEBUG Var - checking the integrity of the function
+  artificial_limit, count = 5, 0
+
   with open(file_path) as json_file:
     data = json.load(json_file)
-    print(type(data))
-    print(data.keys())
-    for row in data:
-      print(type(row))
-      print(row.keys())
-      exit(1)
+    cleaned_data = {} # New "cleaned" file
+    for item in data.items():
+      count += 1 
+      image_name = item[0] # Key of the dict (name of the images)
+      values = item[1] # Values on the dict (dict with url/multi-labels)
+      response = requests.head(values["url"])
+
+      if response.ok: #Checking for availability
+        image_name = image_name.replace("/", "_")
+        cleaned_data[image_name] = values
+        file_path = os.path.join(directory, folder_name, image_name)
+        print(image_name)
+        print(file_path)
+        with open(file_path, 'wb') as file:
+          file.write(requests.get(values["url"]).content)
+      else:
+        logging.debug(f"Imag not available from url: {values['url']}")
+      
+      if count == artificial_limit:
+        # SAVE the cleaned_data as new file
+        exit(1)
   
