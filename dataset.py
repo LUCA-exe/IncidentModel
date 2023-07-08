@@ -20,7 +20,8 @@ from utils import (
     get_place_to_index_mapping,
     get_incident_to_index_mapping,
     get_loaded_json_file,
-    download_images_from_json
+    download_images_from_json,
+    download_images_from_json_parallelized
 )
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
@@ -173,7 +174,7 @@ class IncidentDataset_v2(Dataset):
         incident_name_to_idx (dict): Dict with items (incident_name, index).
     """ 
   def __init__(self):
-    download_images_from_json()
+    download_images_from_json_parallelized()
     
 
 class IncidentDataset(Dataset):
