@@ -50,13 +50,16 @@ def get_parser():
                         help="Path to the downloaded images.")
 
     parser.add_argument("--dataset_train",
-                        default="data/multi_label_train.json")
+                        default="data/multi_label_train.json",
+                        help="Json file with the url/values of images.")
+
     parser.add_argument("--dataset_val",
                         default="data/multi_label_val.json")
 
     # Deprecated: val is the actual "test"
     parser.add_argument("--dataset_test",
-                        default="data/eccv_test.json")
+                        default="data/eccv_test.json",
+                        help="Json file with the url/values of images.")
 
     parser.add_argument('--num_gpus',
                         default=1,

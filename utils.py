@@ -82,11 +82,7 @@ def save_dict_to_json(dictionary, file_path):
 # _v2
 def set_up_logging():
   """Util function to set up the logging
-
-    Args:
-
-    Attributes:
-        
+  
     """ 
   log_folder_path = Path("Logs")
   if not log_folder_path.exists():
@@ -117,20 +113,32 @@ def set_up_logging():
 
 # _v2 - Modular function to be used either for classic or parallelized implementaion
 def download_image(item, folder_path):
-    try:
-        image_name = item[0] # Key of the dict (name of the images)
-        values = item[1] # Values on the dict (dict with url/multi-labels)
-        response = requests.get(values['url'], timeout=5)
-        response.raise_for_status()
-        image_name = image_name.replace("/", "_")
-        file_path = os.path.join(folder_path, image_name)
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        print("Downloaded image:", image_name)
-        return image_name, values  # Return the original data item and the renamed keys
-    except requests.exceptions.RequestException as e:
-        print("Error:", str(e))
-        return None, None
+
+  """Download the image; checking for incosistent case/bad request 
+
+    Args:
+        item (tuple): (image_name, dict)
+        folder_path (str): Path of the folder (to save the images)
+
+    Return:
+        In case of Downloadable image return the item (original format)
+
+    """
+  try:
+      image_name = item[0] # Key of the dict (name of the images)
+      values = item[1] # Values on the dict (dict with url/multi-labels)
+      response = requests.get(values['url'], timeout=3)
+      response.raise_for_status()
+      image_name = image_name.replace("/", "_")
+      file_path = os.path.join(folder_path, image_name)
+      with open(file_path, 'wb') as file:
+          file.write(response.content)
+      print("Downloaded image:", image_name)
+      return image_name, values  # Return the original data item and the renamed keys
+  except requests.exceptions.RequestException as e:
+      print("Error:", str(e))
+      # Case of "problematic" scraping
+      return None, None
 
 # _v2
 def download_images_from_json(file_path="multi_label_train.json", folder_path=None):
@@ -148,42 +156,35 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
   # Update the folder path if is not provided
   if folder_path is None:
     directory, file_name = os.path.split(file_path)# Defined the name of the folder as the name of the images file
-    folder_name = Path(file_name.split(".")[0]) 
+    folder_name = Path(file_name.split(".")[0])
+    folder_path = Path(directory) / Path(folder_name)
   
   logging.debug(f"Name of the images folder: {folder_name}")
 
-  if not folder_name.exists():
-    folder_name.mkdir(parents=True)
+  if not folder_path.exists():
+    folder_path.mkdir(parents=True)
     print("Images folder created.")
   else:
     print("Images folder already exists.")
 
   #DEBUG Var - checking the integrity of the function
-  artificial_limit, count = 20, 0
+  artificial_limit, count = 50, 0
 
+  logging.info(f"Start downloads of images in {folder_path}")
   with open(file_path) as json_file:
     data = json.load(json_file)
     cleaned_data = {} # New "cleaned" file
     for item in data.items():
       count += 1 
-      image_name = item[0] # Key of the dict (name of the images)
-      values = item[1] # Values on the dict (dict with url/multi-labels)
-      response = requests.head(values["url"])
-
-      if response.ok: #Checking for availability
-        image_name = image_name.replace("/", "_")
-        cleaned_data[image_name] = values # Update new dict of the image can be downloaded
-        file_path = os.path.join(directory, folder_name, image_name)
-        with open(file_path, 'wb') as file:
-          file.write(requests.get(values["url"]).content)
-      else:
-        logging.debug(f"Image not available from url: {values['url']}")
+      key, values = download_image(item, folder_path)
+      if key:
+        cleaned_data[key] = values
       
       if count == artificial_limit:
         # Save the cleaned_data as new file in the location of the original file
         new_file_path = os.path.join(directory, "cleaned_" + file_name)
         save_dict_to_json(cleaned_data, new_file_path)
-        exit(1)
+        return
 
 # _v2 - Debug purpose
 def take(n, iterable):
@@ -191,7 +192,7 @@ def take(n, iterable):
     return list(islice(iterable, n))
 
 # _v2
-def download_images_from_json_parallelized(file_path="multi_label_train.json", folder_path=None):
+def download_images_from_json_parallelized(file_path="multi_label_train.json", folder_path=None, num_thread = 10):
   """Parallelized version of the similar function
 
     Args:
@@ -205,23 +206,25 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
   if folder_path is None:
     directory, file_name = os.path.split(file_path)# Defined the name of the folder as the name of the images file
     folder_name = Path(file_name.split(".")[0]) 
+    folder_path = Path(directory) / Path(folder_name)
   
   logging.debug(f"Name of the images folder: {folder_name}")
 
-  if not folder_name.exists():
-    folder_name.mkdir(parents=True)
+  if not folder_path.exists():
+    folder_path.mkdir(parents=True)
     print("Images folder created.")
   else:
     print("Images folder already exists.")
 
+  logging.info(f"Start parallelized downloads of images in {folder_path}")
   with open(file_path) as json_file:
     data = json.load(json_file)
-    data = take(15, data.items()) # DEBUG purpose... just take N items
-    cleaned_data = {} # New "cleaned" file
+    data = take(50, data.items()) # DEBUG purpose... just take N items
+    cleaned_data = {} # New "cleaned" json file to save
 
     # Start parallelization
     with ThreadPoolExecutor() as executor:
-      futures = [executor.submit(download_image, item, os.path.join(directory, folder_name)) for item in data]
+      futures = [executor.submit(download_image, item, folder_path) for item in data]
 
       for future in as_completed(futures):
           key, values = future.result()
@@ -231,4 +234,5 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
     # Save the cleaned_data as new file in the location of the original file
     new_file_path = os.path.join(directory, "cleaned_" + file_name)
     save_dict_to_json(cleaned_data, new_file_path)
+  return
 

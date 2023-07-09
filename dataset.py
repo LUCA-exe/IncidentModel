@@ -173,8 +173,8 @@ class IncidentDataset_v2(Dataset):
         incident_name (list): List of the incident names.
         incident_name_to_idx (dict): Dict with items (incident_name, index).
     """ 
-  def __init__(self):
-    download_images_from_json_parallelized()
+  def __init__(self, args):
+    download_images_from_json(file_path=args.dataset_train)
     
 
 class IncidentDataset(Dataset):

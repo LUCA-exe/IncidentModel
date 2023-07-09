@@ -140,7 +140,7 @@ writer = None
 def main_v2():
   args = parser.parse_args()
   set_up_logging()
-  dataset = IncidentDataset_v2()
+  dataset = IncidentDataset_v2(args)
 
 def main():
     global best_mean_ap, parser, writer
