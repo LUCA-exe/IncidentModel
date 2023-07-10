@@ -17,6 +17,7 @@ import copy
 from torchvision.datasets import CIFAR100
 import logging
 from math import floor
+from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization 
 
 from utils import (
     get_place_to_index_mapping,
@@ -68,6 +69,46 @@ def image_loader(filename):
     return image
 
 
+# _v2
+def get_vectors_v2(data, mapping, vector_len):
+  """Get the vector of labels (0/1) and weight vector (0/1) for our labeled iamges.
+
+    Args:
+        data (dict): 
+            {
+                "place_or_disater": +1/0 (int)
+            }
+        mapping (dict):
+            {
+                "place_or_disater": index (int)
+            }
+        vector_len (int): lenth of vector (includes "no place" or "no incident")
+
+    Returns:
+        tuple: (vector with +1/0 for labels, weight vector with +1 where we have information (negative and positive examples))
+    """
+  vector = np.zeros(vector_len)
+  pos_labels = sum(data.values()) # Number of positive examples
+
+  if pos_labels > 0:
+    # Assume full information
+    weight_vector = np.ones(vector_len)
+    # Put +1 label just in the pos examples found
+    for key, values in data.items():
+      if values == 1:
+        class_index = mapping[key]
+        vector[class_index] = 1
+  else:
+    # The vector just have negative examples
+    weight_vector = np.zeros(vector_len) # Put one just where we have the information
+    for key, values in data.items():
+      class_index = mapping[key]
+      weight_vector[class_index] = 1
+
+  return vector, weight_vector
+
+
+# Old mapping for class/weight for training
 def get_vectors(data, to_index_mapping, vector_len):
     """Get the vector of labels and weight vector for our labeled iamges.
 
@@ -182,6 +223,7 @@ class TestDataset(Dataset):
 
 # _v2
 class IncidentDataset_v2(Dataset):
+
   """A Pytorch dataset for multi_labels classification: images with incidents and places labels.
 
     Args:
@@ -212,9 +254,30 @@ class IncidentDataset_v2(Dataset):
 
               logging.info(f"Starting loading images from path '{self.images_path}'")
 
+              # Start parallelization of the actual data parsing from json file
+              with ThreadPoolExecutor() as executor:
+                futures = [executor.submit(download_image, item, folder_path) for item in data]
 
+                for future in as_completed(futures):
 
+                  key, values = future.result()
+                  if key:
+                    cleaned_data[key] = values
+  
+  # Modular function to parallelize
+  def get_parsed_data(mapping_incidents, mapping_places, incidents, places):
+    """For every image_path return the data item 
 
+    Args: 
+        mapping_incidents (dict): Every key (class name) has a corresponding int value
+        mapping_places (dict): Every key (class name) has a corresponding int value
+        incidents (dict): {"Incident": +1/0}
+        places (dict): {"Place": +1/0}
+
+    Returns:
+        Data item: TO CONTINUE
+    """
+    pass
 
 
               
