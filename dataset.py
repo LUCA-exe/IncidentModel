@@ -15,16 +15,38 @@ import torchvision.transforms as transforms
 from collections import defaultdict
 import copy
 from torchvision.datasets import CIFAR100
+import logging
+from math import floor
 
 from utils import (
     get_place_to_index_mapping,
     get_incident_to_index_mapping,
     get_loaded_json_file,
+    get_loaded_json_file_v2,
     download_images_from_json,
     download_images_from_json_parallelized
 )
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
+
+# _v2
+def get_train_idx(data, split_percentage=80):
+  """Return a train split of the keys of the provided dict of images
+
+    Args:
+        data (dict): Every key is a image path
+        split_percentage (int): It is the percent split to be used
+
+    Returns:
+        train_keys, val_keys (list, list): List of keys (training and validation keys)
+    """
+  logging.debug(f"Splitting train/val keys (percentage: {split_percentage})")
+
+  keys = set(data.keys()) # Set/List are both equivalent; the dict keys are unique anyway
+  num_train = floor((split_percentage / 100) * len(keys)) 
+  train_keys = random.sample(keys, num_train)
+  val_keys = keys.difference(train_keys)
+  return list(train_keys), list(val_keys)
 
 
 def is_image_file(filename):
@@ -186,8 +208,16 @@ class IncidentDataset_v2(Dataset):
               
               # Set internal variables
               self.images_path = images_path
+              self.incidents_images # Split of the json file needed (images path)
+
+              logging.info(f"Starting loading image 'dict' values from path '{self.images_path}'")
 
 
+
+
+
+
+              
 
 # _v2
 def  get_data_loader(args):
@@ -200,7 +230,7 @@ def  get_data_loader(args):
     Return: Dataloader with the settings specified in the "mode" arg
     """
   is_train = True
-  if args.mode == "val" or args.mode == "test":
+  if args.mode == "test":
     is_train = False
 
   if args.download_train_json == "True":
@@ -208,6 +238,19 @@ def  get_data_loader(args):
 
   if args.download_val_json == "True":
     download_images_from_json_parallelized(file_path=args.dataset_val, folder_path=args.images_path)
+
+  # Load the correct paths and pass to the function to create the custom dataset
+  
+  if is_train == True:
+    logging.debug(f"Loading images path/values from file for train/validation splits")
+    train_val_dict = get_loaded_json_file_v2(args.dataset_train)
+
+    train_keys, val_keys = get_train_idx(train_val_dict)
+    train_dict = dict((k, train_val_dict[k]) for k in train_keys)
+    val_dict = dict((k, train_val_dict[k]) for k in val_keys)
+    logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
+    exit(1)
+    IncidentDataset_v2(args.images_path, None, None, None)
 
   return  
 

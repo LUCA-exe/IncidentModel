@@ -61,12 +61,15 @@ def get_parser():
                         default="data/images/",
                         help="Path of the folder to the downloaded images.")
 
+    # Format of the file_name standardized
     parser.add_argument("--dataset_train",
                         default="data/multi_label_train.json",
                         help="Json file with the url/values of images.")
 
+    # Decide to use val or test: the other parameter will be deleted
     parser.add_argument("--dataset_val",
-                        default="data/multi_label_val.json")
+                        default="data/multi_label_val.json",
+                        help="Json file with the url/values of images.")
 
     # Deprecated: val is the actual "test"
     parser.add_argument("--dataset_test",

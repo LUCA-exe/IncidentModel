@@ -140,9 +140,10 @@ writer = None
 def main_v2():
   args = parser.parse_args()
   set_up_logging()
+  logging.info(f"Args parsed: {args}")
 
   if args.mode == "train":
-    get_data_loader(args)
+    train_set = get_data_loader(args)
 
 def main():
     global best_mean_ap, parser, writer

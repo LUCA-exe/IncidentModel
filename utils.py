@@ -10,6 +10,7 @@ import os
 import shutil
 import torch
 import json
+import orjson # Efficent parsing of python
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -71,6 +72,11 @@ def save_checkpoint(state,
 def get_loaded_json_file(path):
     with open(path, "r") as fp:
         return json.load(fp)
+
+# _v2
+def get_loaded_json_file_v2(path):
+    with open(path, "rb") as f:
+      return orjson.loads(f.read())
 
 # _v2
 def save_dict_to_json(dictionary, file_path):
@@ -220,9 +226,9 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
     print("Images folder already exists.")
 
   logging.info(f"Start parallelized downloads of images in {folder_path}")
-  with open(file_path) as json_file:
-    data = json.load(json_file)
-    data = take(5, data.items()) # DEBUG purpose... just take N items
+  with open(file_path, "rb") as f:
+    data = orjson.loads(f.read())
+    data = take(50, data.items()) # DEBUG purpose... just take N items
     cleaned_data = {} # New "cleaned" json file to save
 
     # Start parallelization
@@ -237,5 +243,7 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
     # Save the cleaned_data as new file in the location of the original file
     new_file_path = os.path.join(directory, "cleaned_" + file_name)
     save_dict_to_json(cleaned_data, new_file_path)
+
+    logging.info(f"Changing dataset_{file_name.split('.')[0].split('_')[-1]}_file arg (considering just the cleaning one ...)")
   return
 
