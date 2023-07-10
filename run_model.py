@@ -8,7 +8,7 @@ Helpful resources:
 """
 
 from utils import save_checkpoint, set_up_logging
-from dataset import get_dataset, IncidentDataset_v2
+from dataset import get_dataset, get_data_loader
 from parser import get_parser, get_postprocessed_args
 from loss import get_loss
 import architectures as architectures
@@ -140,7 +140,9 @@ writer = None
 def main_v2():
   args = parser.parse_args()
   set_up_logging()
-  dataset = IncidentDataset_v2(args)
+
+  if args.mode == "train":
+    get_data_loader(args)
 
 def main():
     global best_mean_ap, parser, writer

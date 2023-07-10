@@ -168,7 +168,7 @@ def download_images_from_json(file_path="multi_label_train.json", folder_path=No
     print("Images folder already exists.")
 
   #DEBUG Var - checking the integrity of the function
-  artificial_limit, count = 50, 0
+  artificial_limit, count = 5, 0
 
   logging.info(f"Start downloads of images in {folder_path}")
   with open(file_path) as json_file:
@@ -203,12 +203,15 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
         
     """
   # Update the folder path if is not provided
+  directory, file_name = os.path.split(file_path) # Take info from the file_path
+
   if folder_path is None:
-    directory, file_name = os.path.split(file_path)# Defined the name of the folder as the name of the images file
-    folder_name = Path(file_name.split(".")[0]) 
+    folder_name = Path(file_name.split(".")[0]) # Defined the name of the folder as the name of the images file
     folder_path = Path(directory) / Path(folder_name)
+  else:
+    folder_path = Path(folder_path)
   
-  logging.debug(f"Name of the images folder: {folder_name}")
+  logging.debug(f"Path of the images folder: {folder_path}")
 
   if not folder_path.exists():
     folder_path.mkdir(parents=True)
@@ -219,7 +222,7 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
   logging.info(f"Start parallelized downloads of images in {folder_path}")
   with open(file_path) as json_file:
     data = json.load(json_file)
-    data = take(50, data.items()) # DEBUG purpose... just take N items
+    data = take(5, data.items()) # DEBUG purpose... just take N items
     cleaned_data = {} # New "cleaned" json file to save
 
     # Start parallelization

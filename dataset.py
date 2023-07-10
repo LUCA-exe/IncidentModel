@@ -31,7 +31,7 @@ def is_image_file(filename):
     """Checks if a file is an image.
 
     Args:
-        filename (string): path to a file
+        filename (string): Path of the image file
 
     Returns:
         bool: True if the filename ends with a known image extension
@@ -160,7 +160,7 @@ class TestDataset(Dataset):
 
 # _v2
 class IncidentDataset_v2(Dataset):
-  """A Pytorch dataset for classification of multi-labels: incidents images with incident and place.
+  """A Pytorch dataset for multi_labels classification: images with incidents and places labels.
 
     Args:
         incidents_images (dict): Images that are part of our dataset.
@@ -173,9 +173,43 @@ class IncidentDataset_v2(Dataset):
         incident_name (list): List of the incident names.
         incident_name_to_idx (dict): Dict with items (incident_name, index).
     """ 
-  def __init__(self, args):
-    download_images_from_json(file_path=args.dataset_train)
-    
+  def __init__(self,
+              images_path,
+              incidents_images,
+              place_to_index_mapping,
+              incident_to_index_mapping,
+              transform=None,
+              use_all=False,
+              pos_only=False,
+              using_softmax=False,
+              use_multi_label=True):
+              
+              # Set internal variables
+              self.images_path = images_path
+
+
+
+# _v2
+def  get_data_loader(args):
+  """Main function to return a Dataloader with the customized inner class (IncidentDataset)
+
+    Args:
+        args (dict): Parsed arguments
+        is_train (bool): True if the Dataloader will be used in training
+
+    Return: Dataloader with the settings specified in the "mode" arg
+    """
+  is_train = True
+  if args.mode == "val" or args.mode == "test":
+    is_train = False
+
+  if args.download_train_json == "True":
+    download_images_from_json_parallelized(file_path=args.dataset_train, folder_path=args.images_path)
+
+  if args.download_val_json == "True":
+    download_images_from_json_parallelized(file_path=args.dataset_val, folder_path=args.images_path)
+
+  return  
 
 class IncidentDataset(Dataset):
     """A Pytorch dataset for classification of incidents images with incident and place.
@@ -203,6 +237,7 @@ class IncidentDataset(Dataset):
             pos_only=False,
             using_softmax=False,
             use_multi_label=True):
+
 
         self.images_path = images_path
         self.use_all = use_all

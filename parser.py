@@ -33,21 +33,33 @@ def get_parser():
                         required=True,
                         is_config_file=True,
                         help='Config file path.')
+
     parser.add_argument("--mode",
                         default="train",
                         required=True,
                         type=str,
                         choices=["train", "test", "val"],
-                        help="How to use the model, such as 'train' or 'test'.")
+                        help="How to use the model and config the dataset, such as 'train' or 'test'.")
+
     parser.add_argument("--checkpoint_path",
                         default="pretrained_weights/",
                         type=str,
                         help="Path to checkpoints for training.")
 
     # TODO: make sure to use this
+    parser.add_argument("--download_train_json",
+                        default="True",
+                        type=str,
+                        help="Clean and download the images contained in the json train file")
+    
+    parser.add_argument("--download_val_json",
+                        default="True",
+                        type=str,
+                        help="Clean and download the images contained in the json val file")
+    
     parser.add_argument("--images_path",
-                        default="images/",
-                        help="Path to the downloaded images.")
+                        default="data/images/",
+                        help="Path of the folder to the downloaded images.")
 
     parser.add_argument("--dataset_train",
                         default="data/multi_label_train.json",
