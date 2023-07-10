@@ -208,9 +208,9 @@ class IncidentDataset_v2(Dataset):
               
               # Set internal variables
               self.images_path = images_path
-              self.incidents_images # Split of the json file needed (images path)
+              self.incidents_images = incidents_images # Dict of the images
 
-              logging.info(f"Starting loading image 'dict' values from path '{self.images_path}'")
+              logging.info(f"Starting loading images from path '{self.images_path}'")
 
 
 
@@ -240,17 +240,17 @@ def  get_data_loader(args):
     download_images_from_json_parallelized(file_path=args.dataset_val, folder_path=args.images_path)
 
   # Load the correct paths and pass to the function to create the custom dataset
-  
   if is_train == True:
     logging.debug(f"Loading images path/values from file for train/validation splits")
+    # Retrived the json data (images_path: values)
     train_val_dict = get_loaded_json_file_v2(args.dataset_train)
-
+    # Use the train file to create train/val split
     train_keys, val_keys = get_train_idx(train_val_dict)
     train_dict = dict((k, train_val_dict[k]) for k in train_keys)
     val_dict = dict((k, train_val_dict[k]) for k in val_keys)
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
-    exit(1)
-    IncidentDataset_v2(args.images_path, None, None, None)
+    logging.info(f"Currently working on train dataset ..")
+    train_set = IncidentDataset_v2(args.images_path, train_dict, None, None)
 
   return  
 
