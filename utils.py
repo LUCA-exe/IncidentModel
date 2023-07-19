@@ -18,7 +18,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization 
 from itertools import islice
 
-
+# Use th old version from now.. No -v2 available
 def get_place_to_index_mapping():
     place_to_index_mapping = {}
     file1 = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories/places.txt"), "r")
@@ -198,8 +198,8 @@ def take(n, iterable):
     return list(islice(iterable, n))
 
 # _v2
-def download_images_from_json_parallelized(file_path="multi_label_train.json", folder_path=None, num_thread = 10):
-  """Parallelized version of the similar function
+def download_images_from_json_parallelized(file_path="data/multi_label_train.json", folder_path=None, num_thread = 10):
+  """ Parallelized download of images from a .json file.
 
     Args:
         file_path (str): Path of the json file
@@ -209,7 +209,7 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
         
     """
   # Update the folder path if is not provided
-  directory, file_name = os.path.split(file_path) # Take info from the file_path
+  directory, file_name = os.path.split(file_path) # Take info from the original file_path
 
   if folder_path is None:
     folder_name = Path(file_name.split(".")[0]) # Defined the name of the folder as the name of the images file
@@ -243,7 +243,7 @@ def download_images_from_json_parallelized(file_path="multi_label_train.json", f
     # Save the cleaned_data as new file in the location of the original file
     new_file_path = os.path.join(directory, "cleaned_" + file_name)
     save_dict_to_json(cleaned_data, new_file_path)
-
     logging.info(f"Changing dataset_{file_name.split('.')[0].split('_')[-1]}_file arg (considering just the cleaning one ...)")
+    
   return
 

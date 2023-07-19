@@ -1,7 +1,7 @@
 """
 dataset.py
 
-- Parse the dataset argument (from .json)
+- Parse the dataset images (from .json)
 """
 
 import random
@@ -17,7 +17,10 @@ import copy
 from torchvision.datasets import CIFAR100
 import logging
 from math import floor
-from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization 
+from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization of parsing images values
+
+# Reproducibility of the experiments
+np.random.seed(10)
 
 from utils import (
     get_place_to_index_mapping,
@@ -32,7 +35,7 @@ IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
 # _v2
 def get_train_idx(data, split_percentage=80):
-  """Return a train split of the keys of the provided dict of images
+  """Return a train split (keys) of the provided dict of images
 
     Args:
         data (dict): Every key is a image path
@@ -41,9 +44,9 @@ def get_train_idx(data, split_percentage=80):
     Returns:
         train_keys, val_keys (list, list): List of keys (training and validation keys)
     """
-  logging.debug(f"Splitting train/val keys (percentage: {split_percentage})")
+  logging.debug(f"Splitting train/val keys (percentage: {split_percentage}) from the '_train.json' file")
 
-  keys = set(data.keys()) # Set/List are both equivalent; the dict keys are unique anyway
+  keys = set(data.keys()) # Set/List are both equivalent; the dict keys are unique anyway ..
   num_train = floor((split_percentage / 100) * len(keys)) 
   train_keys = random.sample(keys, num_train)
   val_keys = keys.difference(train_keys)
@@ -51,13 +54,13 @@ def get_train_idx(data, split_percentage=80):
 
 
 def is_image_file(filename):
-    """Checks if a file is an image.
+    """Checks if a file is an image provided some known extension.
 
     Args:
         filename (string): Path of the image file
 
     Returns:
-        bool: True if the filename ends with a known image extension
+        bool: True if the filename is considered an image
     """
     filename_lower = filename.lower()
     return any(filename_lower.endswith(ext) for ext in IMG_EXTENSIONS)
@@ -71,7 +74,7 @@ def image_loader(filename):
 
 # _v2
 def get_vectors_v2(data, mapping, vector_len):
-  """Get the vector of labels (0/1) and weight vector (0/1) for our labeled iamges.
+  """Get the vector of labels (0/1) and weights vector (0/1) for our labeled images.
 
     Args:
         data (dict): 
@@ -139,7 +142,7 @@ def get_vectors(data, to_index_mapping, vector_len):
             raise ValueError("dict should be sparse, with just 1 and 0")
     return vector, weight_vector
 
-
+# Just in the case of NOT multi-label
 def get_split_dictionary(data):
     splits = []
     if len(data["incidents"]) == 0:
@@ -243,10 +246,8 @@ class IncidentDataset_v2(Dataset):
               place_to_index_mapping,
               incident_to_index_mapping,
               transform=None,
-              use_all=False,
-              pos_only=False,
-              using_softmax=False,
-              use_multi_label=True):
+              threads = 10):
+
               
               # Set internal variables
               self.images_path = images_path
@@ -254,18 +255,23 @@ class IncidentDataset_v2(Dataset):
 
               logging.info(f"Starting loading images from path '{self.images_path}'")
 
+              self.data = [] # Simple built-in list
+
               # Start parallelization of the actual data parsing from json file
-              with ThreadPoolExecutor() as executor:
-                futures = [executor.submit(download_image, item, folder_path) for item in data]
+              with ThreadPoolExecutor(max_workers = threads) as executor:
+                futures = [executor.submit(self.get_parsed_data, path, incident_to_index_mapping, place_to_index_mapping, values["incidents"], values["places"]) for path, values in self.incidents_images.items()]
 
                 for future in as_completed(futures):
 
-                  key, values = future.result()
-                  if key:
-                    cleaned_data[key] = values
+                  # Load the mapped/loaded image values in final list
+                  item = future.result()
+                  self.data.append(item)
+
+              logging.info(f"The number of items succesfully loaded are {len(self.data)}")
   
   # Modular function to parallelize
-  def get_parsed_data(mapping_incidents, mapping_places, incidents, places):
+  @staticmethod
+  def get_parsed_data(file_path, mapping_incidents, mapping_places, incidents, places):
     """For every image_path return the data item 
 
     Args: 
@@ -275,9 +281,13 @@ class IncidentDataset_v2(Dataset):
         places (dict): {"Place": +1/0}
 
     Returns:
-        Data item: TO CONTINUE
+        Data item: Built-in tuple that contain all the parsed values
     """
-    pass
+
+    incident_vector, incident_weight_vector = get_vectors(incidents, mapping_incidents, len(mapping_incidents))
+    place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
+
+    return (file_path, place_vector, incident_vector, place_weight_vector, incident_weight_vector) # Parsed item of the images
 
 
               
@@ -302,18 +312,23 @@ def  get_data_loader(args):
   if args.download_val_json == "True":
     download_images_from_json_parallelized(file_path=args.dataset_val, folder_path=args.images_path)
 
+  # Mapping imported from utils.py using old function
+  place_to_index_mapping = get_place_to_index_mapping()
+  incident_to_index_mapping = get_incident_to_index_mapping()
+
   # Load the correct paths and pass to the function to create the custom dataset
   if is_train == True:
-    logging.debug(f"Loading images path/values from file for train/validation splits")
+    logging.debug(f"Loading images path/values from file for train/validation splits ({args.dataset_train})")
     # Retrived the json data (images_path: values)
     train_val_dict = get_loaded_json_file_v2(args.dataset_train)
+
     # Use the train file to create train/val split
     train_keys, val_keys = get_train_idx(train_val_dict)
     train_dict = dict((k, train_val_dict[k]) for k in train_keys)
     val_dict = dict((k, train_val_dict[k]) for k in val_keys)
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
     logging.info(f"Currently working on train dataset ..")
-    train_set = IncidentDataset_v2(args.images_path, train_dict, None, None)
+    train_set = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping)
 
   return  
 
