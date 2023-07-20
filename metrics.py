@@ -1,6 +1,8 @@
-"""Metrics
+"""
+Metrics
 
-This file is for metrics code.
+- Compute metrics
+- Run validation on the val dataset
 """
 
 import os

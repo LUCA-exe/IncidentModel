@@ -143,7 +143,10 @@ def main_v2():
   logging.info(f"Args parsed: {args}")
 
   if args.mode == "train":
-    train_set = get_data_loader(args)
+    train_loader, val_loader = get_data_loader(args)
+
+  if args.mode == "test":
+    train_loader, val_loader = get_data_loader(args)
 
 def main():
     global best_mean_ap, parser, writer

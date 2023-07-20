@@ -282,13 +282,10 @@ class IncidentDataset_v2(Dataset):
                   if job_completed % keep_track == 0:
                     logging.debug(f"> Images already parsed: {job_completed}")
 
+              # For the label 'no_incidents'/'no_places' It will be considered if the threshold is not respected -> validation phase of the classes scores
               logging.info(f"The number of items succesfully loaded are {len(self.data)}")
-
-              # STILL have to cover the 'no_incidents'/'no_places' case (check the len of the arrays ..)
               
 
-
-              
   # Modular function to parallelize
   @staticmethod
   def get_parsed_data(file_path, mapping_incidents, mapping_places, incidents, places):
@@ -307,7 +304,29 @@ class IncidentDataset_v2(Dataset):
     incident_vector, incident_weight_vector = get_vectors(incidents, mapping_incidents, len(mapping_incidents))
     place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
 
-    return (file_path, place_vector, incident_vector, place_weight_vector, incident_weight_vector) # Parsed item of the images
+    return (file_path, incident_vector, place_vector, incident_weight_vector, place_weight_vector) # Parsed item of the images
+
+  # Override of the class for the custom dataset
+  def __len__(self):
+        return len(self.all_data)
+
+  # Override of the class for the custom dataset
+  def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index to fetch from the list of items
+
+        Returns:
+            tuple: incident_label_item (list), no_incident_label_item (list)
+        """
+
+        my_item = list(self.all_data[index])
+        image_name = my_item[0]
+        img = self.image_loader(os.path.join(self.images_path, image_name))
+        if self.transform is not None:
+            img = self.transform(img)
+        my_item[0] = img
+        return my_item
 
 
 # _v2
@@ -347,9 +366,10 @@ def  get_data_loader(args):
     val_dict = dict((k, train_val_dict[k]) for k in val_keys)
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
     logging.info(f"Currently working on train dataset ..")
-    train_set = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping)
-
-  return  
+    train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping)
+    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping)
+    
+  return  None, None
 
 class IncidentDataset(Dataset):
     """A Pytorch dataset for classification of incidents images with incident and place.
