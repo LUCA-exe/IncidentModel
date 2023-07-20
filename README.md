@@ -1,34 +1,6 @@
-# Incidents Dataset
+# Real-time incident detection
 
-See the following pages for more details:
 
-- Project page: [http://incidentsdataset.csail.mit.edu/](http://incidentsdataset.csail.mit.edu/) or [https://ethanweber.me/IncidentsDataset](https://ethanweber.me/IncidentsDataset).
-- ECCV 2020 Paper "Detecting natural disasters, damage, and incidents in the wild" [here](https://arxiv.org/abs/2008.09188).
-- **Extended Paper** "Incidents1M: a large-scale dataset of images with natural disasters, damage, and incidents" [here](https://arxiv.org/abs/2201.04236).
-
-# Obtain the data
-
-> Please fill out [this form](https://docs.google.com/forms/d/e/1FAIpQLSe1XEHEXe0DskkKWCpCVzho8H7RTIBDEVh3P16NtIjJEsm2ZQ/viewform) and then email/notify incidentsdataset@googlegroups.com to request the data.
-
-The data structure is in JSON with URLs and labels. The files are in the following form:
-
-```
-# single-label multi-class (ECCV 2020 version):
-eccv_train.json
-eccv_val.json
-
-# multi-label multi-class (latest version):
-multi_label_train.json
-multi_label_val.json
-```
-
-1. Download chosen JSON files and move to the [data](data/) folder.
-
-2. Look at [VisualizeDataset.ipynb](VisualizeDataset.ipynb) to see the composition of the dataset files.
-
-3. Download the images at the URLs specified in the JSON files.
-
-4. Take note of image download location. This is param `--images_path` in [parser.py](/parser).
 
 # Setup environment
 
@@ -97,7 +69,13 @@ pip install -r requirements.txt
 
    See the `configs/` folder for more details.
 
-# Citation
+# (Inspired from) Incidents1M: a large-scale dataset of images with natural disasters, damage, and incidents
+
+See the following pages for more details:
+
+- Project page: [http://incidentsdataset.csail.mit.edu/](http://incidentsdataset.csail.mit.edu/) or [https://ethanweber.me/IncidentsDataset](https://ethanweber.me/IncidentsDataset).
+- ECCV 2020 Paper "Detecting natural disasters, damage, and incidents in the wild" [here](https://arxiv.org/abs/2008.09188).
+- **Extended Paper** "Incidents1M: a large-scale dataset of images with natural disasters, damage, and incidents" [here](https://arxiv.org/abs/2201.04236).
 
 If you find this work helpful for your research, please consider citing our paper:
 
@@ -111,10 +89,8 @@ If you find this work helpful for your research, please consider citing our pape
 }
 ```
 
-# License
+# Original repository
 
-This work is licensed with the MIT License. See [LICENSE](LICENSE) for details.
-
-# Acknowledgements
-
-This work is supported by the CSAIL-QCRI collaboration project and RTI2018-095232-B-C22 grant from the Spanish Ministry of Science, Innovation and Universities.
+```
+git clone https://github.com/ethanweber/IncidentsDataset
+```
