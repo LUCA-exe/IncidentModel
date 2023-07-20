@@ -142,7 +142,7 @@ def get_vectors(data, to_index_mapping, vector_len):
             raise ValueError("dict should be sparse, with just 1 and 0")
     return vector, weight_vector
 
-# Just in the case of NOT multi-label
+# Just in the case of NOT multi-label (deprecated)
 def get_split_dictionary(data):
     splits = []
     if len(data["incidents"]) == 0:
@@ -230,9 +230,13 @@ class IncidentDataset_v2(Dataset):
   """A Pytorch dataset for multi_labels classification: images with incidents and places labels.
 
     Args:
+        images_path (str): Path of the images folder
         incidents_images (dict): Images that are part of our dataset.
-        place_to_index_mapping (dict):
-        incident_to_index_mapping (dict):
+        place_to_index_mapping (dict): Dict of 'key:idx' pairs for the places
+        incident_to_index_mapping (dict): Dict of 'key:idx' pairs for the incidents
+        transform (list of Transform obj): Processing to apply to the images
+        threads (int): Number of process to parallelize
+        keep_track (int): Number of completed images considered for the status print during the parsing 
 
     Attributes:
         place_names (list): List of the place names.
@@ -246,9 +250,10 @@ class IncidentDataset_v2(Dataset):
               place_to_index_mapping,
               incident_to_index_mapping,
               transform=None,
-              threads = 10):
+              pos_only=False,
+              threads = 10,
+              keep_track=10):
 
-              
               # Set internal variables
               self.images_path = images_path
               self.incidents_images = incidents_images # Dict of the images
@@ -260,15 +265,30 @@ class IncidentDataset_v2(Dataset):
               # Start parallelization of the actual data parsing from json file
               with ThreadPoolExecutor(max_workers = threads) as executor:
                 futures = [executor.submit(self.get_parsed_data, path, incident_to_index_mapping, place_to_index_mapping, values["incidents"], values["places"]) for path, values in self.incidents_images.items()]
-
+                
+                job_completed = 0 # temporary solution to keep count of the jobs
                 for future in as_completed(futures):
-
+                  job_completed += 1
                   # Load the mapped/loaded image values in final list
                   item = future.result()
-                  self.data.append(item)
+                  # For modularity It is added the 'pos_only' option for the training phase
+                  if pos_only: # save the item if it contains at least one postive label for incident
+                    if sum(item[2]) > 0:
+                      self.data.append(item)
+                  else:
+                    self.data.append(item)
+
+                  # Keep track of the progress
+                  if job_completed % keep_track == 0:
+                    logging.debug(f"> Images already parsed: {job_completed}")
 
               logging.info(f"The number of items succesfully loaded are {len(self.data)}")
-  
+
+              # STILL have to cover the 'no_incidents'/'no_places' case (check the len of the arrays ..)
+              
+
+
+              
   # Modular function to parallelize
   @staticmethod
   def get_parsed_data(file_path, mapping_incidents, mapping_places, incidents, places):
@@ -290,8 +310,6 @@ class IncidentDataset_v2(Dataset):
     return (file_path, place_vector, incident_vector, place_weight_vector, incident_weight_vector) # Parsed item of the images
 
 
-              
-
 # _v2
 def  get_data_loader(args):
   """Main function to return a Dataloader with the customized inner class (IncidentDataset)
@@ -307,7 +325,8 @@ def  get_data_loader(args):
     is_train = False
 
   if args.download_train_json == "True":
-    download_images_from_json_parallelized(file_path=args.dataset_train, folder_path=args.images_path)
+    # If you require preprocessing, the args.dataset_train will be updated to the clean one
+    args.dataset_train = download_images_from_json_parallelized(file_path=args.dataset_train, folder_path=args.images_path)
 
   if args.download_val_json == "True":
     download_images_from_json_parallelized(file_path=args.dataset_val, folder_path=args.images_path)

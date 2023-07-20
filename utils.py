@@ -111,7 +111,7 @@ def set_up_logging():
 
   # Save the file
   try:
-    logging.basicConfig(filename=file_path_str, filemode='w', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(filename=file_path_str, filemode='w', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
   except AssertionError as error:
     print(f"Can't create log file >>> Error: {error}")
   
@@ -228,7 +228,7 @@ def download_images_from_json_parallelized(file_path="data/multi_label_train.jso
   logging.info(f"Start parallelized downloads of images in {folder_path}")
   with open(file_path, "rb") as f:
     data = orjson.loads(f.read())
-    data = take(50, data.items()) # DEBUG purpose... just take N items
+    data = take(200, data.items()) # DEBUG purpose... just take N items
     cleaned_data = {} # New "cleaned" json file to save
 
     # Start parallelization
@@ -243,7 +243,8 @@ def download_images_from_json_parallelized(file_path="data/multi_label_train.jso
     # Save the cleaned_data as new file in the location of the original file
     new_file_path = os.path.join(directory, "cleaned_" + file_name)
     save_dict_to_json(cleaned_data, new_file_path)
+    # Switch the file name to the cleaned one
     logging.info(f"Changing dataset_{file_name.split('.')[0].split('_')[-1]}_file arg (considering just the cleaning one ...)")
     
-  return
+  return new_file_path
 
