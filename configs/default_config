@@ -1,0 +1,8 @@
+batch_size=16
+dataset=pos_and_neg
+activation=sigmoid
+epochs=5
+lr=0.03
+arch=google_vit_b_16
+dataset_train=./data/multi_label_train.json
+dataset_val=./data/multi_label_val.json
