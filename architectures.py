@@ -1,4 +1,8 @@
-"""models.py
+"""
+models.py
+
+- Set up the model architecture from HuggingFace
+- Set up the customized Trainer class from HuggingFace
 """
 from PIL import Image
 from torch.nn import functional as F
@@ -17,7 +21,8 @@ import os
 import wget
 import timm
 import tensorflow as tf
-from transformers import AutoImageProcessor, ViTForImageClassification
+from transformers import Trainer, ViTForImageClassification
+import logging
 
 # same loader used during training
 inference_loader = transforms.Compose([
@@ -28,10 +33,17 @@ inference_loader = transforms.Compose([
 ])
 
 
-def get_model(Trainer):
+# _v2
+def get_model(args):
   """ Function to get the model from HuggingFace library and customize it
   
   """
+  if args.arch == "google_vit_b_16":
+    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224")
+    logging.info(f"Model {args.arch} succefully loaded (from HuggingFace)")
+    print(model)
+    print(type(model))
+
   return model
 
 # _v2

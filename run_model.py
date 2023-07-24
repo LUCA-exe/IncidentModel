@@ -12,6 +12,7 @@ from dataset import get_dataset, get_data_loader
 from parser import get_parser, get_postprocessed_args
 from loss import get_loss
 import architectures as architectures
+from architectures import get_model
 from metrics import AverageMeter, accuracy, validate
 from datetime import datetime
 #from tensorboardX import SummaryWriter
@@ -28,7 +29,7 @@ cudnn.benchmark = True
 
 def train(args, train_loader, val_loader):
   """ Train phase
-  
+
   """
   
   return 
@@ -156,6 +157,9 @@ def main_v2():
   if args.mode == "test":
     _, test_loader = get_data_loader(args)
     logging.info(f"test_loader (test phase)")
+
+  # Set up the model
+  model = get_model(args)
 
 def main():
     global best_mean_ap, parser, writer

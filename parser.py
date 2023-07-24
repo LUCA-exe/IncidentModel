@@ -9,10 +9,12 @@ CHOICES_DATA_USED = [
     "pos_only",
     "pos_and_neg"
 ]
+
+# Updated for HuggingFace download options
 CHOICES_ARCHITECTURES = [
     "resnet18",
     "resnet50",
-    "vit_b_16",
+    "google_vit_b_16",
     "vit_l_16"
 ]
 CHOICES_ACTIVATION = [
@@ -34,6 +36,7 @@ def get_parser():
                         is_config_file=True,
                         help='Config file path.')
 
+    # 'val'm deprecated
     parser.add_argument("--mode",
                         default="train",
                         required=True,
@@ -97,12 +100,15 @@ def get_parser():
                         default='pos_only',
                         help='Which dataset to train with.',
                         choices=CHOICES_DATA_USED)
+
+    # modified for 'loading' the architecture from HuggingFace                    
     parser.add_argument('--arch',
                         '-a',
                         metavar='ARCH',
-                        default='resnet18',
+                        default='google_vit_b_16',
                         choices=CHOICES_ARCHITECTURES,
                         help='Which model architecture to use.')
+                        
     parser.add_argument('--ignore_places_during_training',
                         default="False",
                         type=str)
