@@ -1,7 +1,7 @@
 """
 models.py
 
-- Set up the model architecture from HuggingFace
+- Set up the customized model architecture (backbone from HuggingFace)
 - Set up the customized Trainer class from HuggingFace
 """
 from PIL import Image
@@ -32,38 +32,56 @@ inference_loader = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+# _v2
+class IncidentModel(nn.Module):
+  """ Function to attach multiple classification heads to the original 'trunk' model from HuggingFace
+
+      return: Ensemble model created with standard 'PyTorch' API
+  """
+  def __init__(self, backbone, in_features, incident_out_features, places_out_features):
+    super(IncidentModel, self).__init__()
+    self.backbone = backbone
+    self.incident_head = nn.Linear(in_features, incident_out_features, bias=True, device=None, dtype=None)
+    self.place_head = nn.Linear(in_features, places_out_features, bias=True, device=None, dtype=None)
+        
+  def forward(self, input_data):
+    backbone_output = self.backbone(input_data) # Backbone from HuggingFace provide a final dense layer with the tanh activation function
+    incident_output = self.incident_head(backbone_output)
+    place_output = self.place_head(backbone_output)
+
+    return incident_output, place_output # Sigmoid applied on the 'loss computation'
+
 #_ v2
 def save_model_architecture(args):
-  """ Function to load architecture and weights save config (called from get model)
+  """ Function to save architecture config (called from get model)
   
   """
 
 # _v2
 def get_model(args):
-  """ Function to get the model from HuggingFace library and customize it
+  """ Function to get the backbone from HuggingFace library and add the two heads
   
   """
-  
-
   if args.arch == "google_vit_b_16":
 
-    if args.architecture_path != "None":
+    if args.load_arch_path != "None":
       # Check if the custom architecture config file 'actually' exist
-      if os.path.exists(args.architecture_path):
-        model = ViTModel.from_pretrained("google/vit-base-patch16-224", config=args.architecture_path)
+      if os.path.exists(args.load_arch_path):
+        backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config=args.load_arch_path)
       else:
-        logging.debug(f"Can't find the architecture path: {args.architecture_path}")
-        exit(1) # Temporary solution.. (to fix)
-    else:
-      # If not, customize the architecure from the default pre-trained model
-      model = ViTModel.from_pretrained("google/vit-base-patch16-224")
-      logging.info(f"Model {args.arch} succefully loaded (from HuggingFace)")
-      print(model)
-      print(model["pooler"])
-
-
+        logging.debug(f"Can't find the architecture path: {args.load_arch_path} - load the default model config")
+        backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
     
-
+    # Customize the architecure from the default pre-trained model
+    backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+    logging.info(f"Backbone {args.arch} succefully loaded (from HuggingFace)")
+    logging.debug(backbone)
+    # Create the ensemble
+    model = IncidentModel(backbone, 768, args.num_incidents, args.num_places) # Input features passed statically (to fix)
+    logging.info(f"Custom model succesfully loaded\n{model}")
+    
+    # Check for already saved weights !!!
+      
   return model
 
 # _v2
@@ -71,7 +89,6 @@ class CustomTrainer(Trainer):
   """ Custom trainer to train the 'custom' two heads transformers
   
   """
-
 
 class FilenameDataset(data.Dataset):
     """
@@ -267,7 +284,6 @@ def get_trunk_model(args):
             #model = nn.Sequential(model, nn.ReLU())
             model.fc = nn.Sequential(nn.Linear(2048, 1024), nn.ReLU())
         return model
-
 
 def get_incident_layer(args):
     if args.activation == "softmax":

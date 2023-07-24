@@ -50,10 +50,10 @@ def get_parser():
                         help="Path to checkpoints for training.")
 
     # Load if already available in the folder 'pretrained_weights'
-    parser.add_argument("--architecture_path",
+    parser.add_argument("--load_arch_path",
                         default="None",
                         type=str,
-                        help="Path to the architecture of the custom networks")
+                        help="Path to the architecture of the backbone model (pretrained from HuggingFace)")
 
     # TODO: make sure to use this
     parser.add_argument("--download_train_json",
