@@ -17,6 +17,7 @@ import os
 import wget
 import timm
 import tensorflow as tf
+from transformers import AutoImageProcessor, ViTForImageClassification
 
 # same loader used during training
 inference_loader = transforms.Compose([
@@ -25,6 +26,19 @@ inference_loader = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
+
+def get_model(Trainer):
+  """ Function to get the model from HuggingFace library and customize it
+  
+  """
+  return model
+
+# _v2
+class CustomTrainer(Trainer):
+  """ Custom trainer to train the 'custom' two heads transformers
+  
+  """
 
 
 class FilenameDataset(data.Dataset):

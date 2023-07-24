@@ -306,11 +306,11 @@ class IncidentDataset_v2(Dataset):
 
     return (file_path, incident_vector, place_vector, incident_weight_vector, place_weight_vector) # Parsed item of the images
 
-  # Override of the class for the custom dataset
+  # Override of the class for the custom dataset (_v2)
   def __len__(self):
         return len(self.all_data)
 
-  # Override of the class for the custom dataset
+  # Override of the class for the custom dataset (_v2)
   def __getitem__(self, index):
         """
         Args:
@@ -368,8 +368,9 @@ def  get_data_loader(args):
     logging.info(f"Currently working on train dataset ..")
     train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping)
     val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping)
-    
-  return  None, None
+    return train_dataset, val_dataset # In case of training phase
+
+  return  None, test_dataset # In case of test phase
 
 class IncidentDataset(Dataset):
     """A Pytorch dataset for classification of incidents images with incident and place.

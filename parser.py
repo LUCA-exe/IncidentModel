@@ -55,7 +55,7 @@ def get_parser():
     parser.add_argument("--download_val_json",
                         default="True",
                         type=str,
-                        help="Clean and download the images contained in the json val file")
+                        help="Clean and download the images contained in the json val file (to be used in the test phase)")
     
     parser.add_argument("--images_path",
                         default="data/images/",

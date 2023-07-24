@@ -26,6 +26,13 @@ import logging
 
 cudnn.benchmark = True
 
+def train(args, train_loader, val_loader):
+  """ Train phase
+  
+  """
+  
+  return 
+
 
 def train(args, train_loader, all_models, optimizer, epoch):
     """
@@ -144,9 +151,11 @@ def main_v2():
 
   if args.mode == "train":
     train_loader, val_loader = get_data_loader(args)
+    logging.info(f"train_loader and val_loader instatiated (training phase)")
 
   if args.mode == "test":
-    train_loader, val_loader = get_data_loader(args)
+    _, test_loader = get_data_loader(args)
+    logging.info(f"test_loader (test phase)")
 
 def main():
     global best_mean_ap, parser, writer
