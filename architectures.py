@@ -21,7 +21,7 @@ import os
 import wget
 import timm
 import tensorflow as tf
-from transformers import Trainer, ViTForImageClassification
+from transformers import Trainer, ViTModel
 import logging
 
 # same loader used during training
@@ -32,17 +32,37 @@ inference_loader = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+#_ v2
+def save_model_architecture(args):
+  """ Function to load architecture and weights save config (called from get model)
+  
+  """
 
 # _v2
 def get_model(args):
   """ Function to get the model from HuggingFace library and customize it
   
   """
+  
+
   if args.arch == "google_vit_b_16":
-    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224")
-    logging.info(f"Model {args.arch} succefully loaded (from HuggingFace)")
-    print(model)
-    print(type(model))
+
+    if args.architecture_path != "None":
+      # Check if the custom architecture config file 'actually' exist
+      if os.path.exists(args.architecture_path):
+        model = ViTModel.from_pretrained("google/vit-base-patch16-224", config=args.architecture_path)
+      else:
+        logging.debug(f"Can't find the architecture path: {args.architecture_path}")
+        exit(1) # Temporary solution.. (to fix)
+    else:
+      # If not, customize the architecure from the default pre-trained model
+      model = ViTModel.from_pretrained("google/vit-base-patch16-224")
+      logging.info(f"Model {args.arch} succefully loaded (from HuggingFace)")
+      print(model)
+      print(model["pooler"])
+
+
+    
 
   return model
 

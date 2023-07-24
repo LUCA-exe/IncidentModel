@@ -49,6 +49,12 @@ def get_parser():
                         type=str,
                         help="Path to checkpoints for training.")
 
+    # Load if already available in the folder 'pretrained_weights'
+    parser.add_argument("--architecture_path",
+                        default="None",
+                        type=str,
+                        help="Path to the architecture of the custom networks")
+
     # TODO: make sure to use this
     parser.add_argument("--download_train_json",
                         default="True",
