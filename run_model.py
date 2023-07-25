@@ -24,7 +24,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import logging
-from CustomTrainer import CustomTrainer
+from CustomTrainer import CustomTrainer, data_collator
 from transformers import TrainingArguments
 
 cudnn.benchmark = True
@@ -53,7 +53,9 @@ def train_v2(args, train_loader, val_loader, model):
   # Initiate the custom trainer
   trainer = CustomTrainer(model=model,
                           args=training_args,
-
+                          data_collator=data_collator,
+                          train_dataset=train_loader,
+                          eval_dataset=val_loader
   )
   return 
 
@@ -183,7 +185,7 @@ def main_v2():
 
   # Set up the model
   model = get_model(args)
-  train_v2(train_loader, val_loader, model)
+  train_v2(args, train_loader, val_loader, model)
 
 def main():
     global best_mean_ap, parser, writer
