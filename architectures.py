@@ -84,12 +84,7 @@ def get_model(args):
       
   return model
 
-# _v2
-class CustomTrainer(Trainer):
-  """ Custom trainer to train the 'custom' two heads transformers
-  
-  """
-
+# Old function for the 'demo_server.py'
 class FilenameDataset(data.Dataset):
     """
     Data loader for filenames and their corresponding labels.

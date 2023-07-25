@@ -298,13 +298,13 @@ class IncidentDataset_v2(Dataset):
         places (dict): {"Place": +1/0}
 
     Returns:
-        Data item: Built-in tuple that contain all the parsed values
+        Data item: Built-in Dict that contain all the parsed values
     """
 
     incident_vector, incident_weight_vector = get_vectors(incidents, mapping_incidents, len(mapping_incidents))
     place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
 
-    return (file_path, incident_vector, place_vector, incident_weight_vector, place_weight_vector) # Parsed item of the images
+    return {'image':file_path, 'incidents_target':incident_vector, 'places_target':place_vector, 'incidents_weight':incident_weight_vector, 'places_weight':place_weight_vector} # Parsed item of the images
 
   # Override of the class for the custom dataset (_v2)
   def __len__(self):
@@ -320,12 +320,13 @@ class IncidentDataset_v2(Dataset):
             tuple: incident_label_item (list), no_incident_label_item (list)
         """
 
-        my_item = list(self.all_data[index])
-        image_name = my_item[0]
+        my_item = self.all_data[index]
+        image_name = my_item["image"]
         img = self.image_loader(os.path.join(self.images_path, image_name))
         if self.transform is not None:
             img = self.transform(img)
-        my_item[0] = img
+        # Subscribe the path with the "processed" image
+        my_item["image"] = img
         return my_item
 
 
@@ -354,8 +355,27 @@ def  get_data_loader(args):
   place_to_index_mapping = get_place_to_index_mapping()
   incident_to_index_mapping = get_incident_to_index_mapping()
 
+  # Instantiate normalization for the transform composition
+  normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+  val_transform = transforms.Compose([
+              transforms.Resize(416),
+              transforms.CenterCrop(384),
+              transforms.ToTensor(),
+              normalize
+              ])
+
   # Load the correct paths and pass to the function to create the custom dataset
   if is_train == True:
+    
+    # Set up the train transformer
+    train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(384),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize
+        ])
+
     logging.debug(f"Loading images path/values from file for train/validation splits ({args.dataset_train})")
     # Retrived the json data (images_path: values)
     train_val_dict = get_loaded_json_file_v2(args.dataset_train)
@@ -366,8 +386,20 @@ def  get_data_loader(args):
     val_dict = dict((k, train_val_dict[k]) for k in val_keys)
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
     logging.info(f"Currently working on train dataset ..")
-    train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping)
-    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping)
+    train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform)
+    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform)
+    
+    # Set up the train and val Dataloader from Torch utils
+    
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        pin_memory=True
+    )
+    
     return train_dataset, val_dataset # In case of training phase
 
   return  None, test_dataset # In case of test phase
@@ -589,7 +621,7 @@ def get_dataset(args,
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        shuffle=shuffle,
+        shuffle=False,
         num_workers=args.workers,
         pin_memory=True
     )
