@@ -30,14 +30,35 @@ class CustomTrainer(Trainer):
   
     """
     # Parse the data provided by the data collator Dict (in batch)
-    incidents_target, places_target = inputs["incidents_targets"], inputs["places_targets"]
+    incidents_targets, places_targets = inputs["incidents_targets"], inputs["places_targets"]
     incidents_weights, places_weights = inputs["incidents_weights"], inputs["places_weights"]
     incidents_outputs, places_outputs = model(inputs["images"])
 
-    # Instantiate the sigmoid layer
-    activation = nn.Sigmoid()
+    activation = nn.Sigmoid() # Instantiate the sigmoid layer
+
+    incidents_outputs = activation(incidents_outputs) # [B, 43]
+    places_outputs = activation(places_outputs) # [B, 49]
+
+    # Check the formula from the original research
+    criterion = nn.BCELoss(reduction='none')
+    incident_loss = torch.sum(
+        criterion(
+            incidents_outputs,
+            incidents_targets.type(torch.FloatTensor).cuda(non_blocking=True)
+        ) * incidents_weights, dim=1) # to shape [B]
     
-    return
+    incident_loss = incident_loss.mean()
+
+    place_loss = torch.sum(
+        criterion(
+            places_outputs,
+            places_targets.type(torch.FloatTensor).cuda(non_blocking=True)
+        ) * places_weights, dim=1)
+    place_loss = place_loss.mean()
+
+    loss = incident_loss + place_loss
+    # Following the standard format from HuggingFace library
+    return (loss, (incidents_outputs, places_outputs)) if return_outputs else loss
 
 def get_loss(args,
              incident_output,
