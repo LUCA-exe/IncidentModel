@@ -21,7 +21,7 @@ import os
 import wget
 import timm
 import tensorflow as tf
-from transformers import Trainer, ViTModel
+from transformers import Trainer, ViTConfig, ViTModel
 import logging
 
 # same loader used during training
@@ -51,11 +51,12 @@ class IncidentModel(nn.Module):
 
     return incident_output, place_output # Sigmoid applied on the 'loss computation'
 
-#_ v2
+#_ v2 (TO FIX)
 def save_model_architecture(args):
   """ Function to save architecture config (called from get model)
   
   """
+  return
 
 # _v2
 def get_model(args):
@@ -70,7 +71,7 @@ def get_model(args):
         backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config=args.load_arch_path)
       else:
         logging.debug(f"Can't find the architecture path: {args.load_arch_path} - load the default model config")
-        backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+        backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config = ViTConfig())
     
     # Customize the architecure from the default pre-trained model
     backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")

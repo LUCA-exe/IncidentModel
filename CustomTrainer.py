@@ -8,18 +8,32 @@ from transformers import Trainer
 import torch
 import torch.nn as nn
 
+# _v2
+def data_collator(batch):
+  """ Custom data_collator to form a batch of data for the modified compute_loss
+  
+  """
+  return {'images': torch.stack([x['image'] for x in batch]),
+          'incidents_targets': torch.stack([x['incidents_target'] for x in batch]),
+          'places_targets': torch.stack([x['places_target'] for x in batch]),
+          'incidents_weights': torch.stack([x['incidents_weight'] for x in batch]),
+          'places_weights': torch.stack([x['places_weight'] for x in batch])
+        }
 
 # _v2
 class CustomTrainer(Trainer):
-  """ Custom trainer to train the 'custom' two heads transformers
+  """ Custom trainer
   
   """
   def compute_loss(self, model, inputs, return_outputs=False):
+    """ Compute loss: get the batch of data as Dict from the data collator
+  
+    """
+    # Parse the data provided by the data collator Dict (in batch)
+    incidents_target, places_target = inputs["incidents_targets"], inputs["places_targets"]
+    incidents_weights, places_weights = inputs["incidents_weights"], inputs["places_weights"]
+    incidents_outputs, places_outputs = model(inputs["images"])
 
-    # TO check the inputs passed --> adapt the code if batch ..
-    incidents_target, places_target = inputs["incidents_target"], inputs["places_target"]
-    incidents_weight, places_weight = inputs["incidents_weight"], inputs["places_weight"]
-    incidents_output, places_output = model(inputs["image"])
     # Instantiate the sigmoid layer
     activation = nn.Sigmoid()
     

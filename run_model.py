@@ -24,14 +24,37 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import logging
+from CustomTrainer import CustomTrainer
+from transformers import TrainingArguments
 
 cudnn.benchmark = True
 
-def train(args, train_loader, val_loader):
-  """ Train phase
+# _v2
+def train_v2(args, train_loader, val_loader, model):
+  """ Train phase implementing the custom trainer
 
   """
-  
+  # Init custom args for the Trainer
+  training_args = TrainingArguments(output_dir=f"./{args.arch}",
+                                    per_device_train_batch_size=args.batch_size,
+                                    evaluation_strategy="steps",
+                                    num_train_epochs=args.epochs,
+                                    fp16=True,
+                                    save_steps=100,
+                                    eval_steps=100,
+                                    logging_steps=10,
+                                    learning_rate=args.lr,
+                                    save_total_limit=2,
+                                    remove_unused_columns=False,
+                                    push_to_hub=False,
+                                    load_best_model_at_end=True
+  )
+
+  # Initiate the custom trainer
+  trainer = CustomTrainer(model=model,
+                          args=training_args,
+
+  )
   return 
 
 
@@ -160,6 +183,7 @@ def main_v2():
 
   # Set up the model
   model = get_model(args)
+  train_v2(train_loader, val_loader, model)
 
 def main():
     global best_mean_ap, parser, writer

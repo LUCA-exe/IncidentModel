@@ -276,7 +276,7 @@ class IncidentDataset_v2(Dataset):
                     if sum(item[2]) > 0:
                       self.data.append(item)
                   else:
-                    self.data.append(item)
+                    self.data.append(item) # Standard list of Dict
 
                   # Keep track of the progress
                   if job_completed % keep_track == 0:
@@ -303,8 +303,9 @@ class IncidentDataset_v2(Dataset):
 
     incident_vector, incident_weight_vector = get_vectors(incidents, mapping_incidents, len(mapping_incidents))
     place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
-
-    return {'image':file_path, 'incidents_target':incident_vector, 'places_target':place_vector, 'incidents_weight':incident_weight_vector, 'places_weight':place_weight_vector} # Parsed item of the images
+     
+    # Parsed item of the images: return a Dict as standard in the HuggingFace documentation
+    return {'image':file_path, 'incidents_target':incident_vector, 'places_target':place_vector, 'incidents_weight':incident_weight_vector, 'places_weight':place_weight_vector}
 
   # Override of the class for the custom dataset (_v2)
   def __len__(self):
@@ -325,10 +326,8 @@ class IncidentDataset_v2(Dataset):
         img = self.image_loader(os.path.join(self.images_path, image_name))
         if self.transform is not None:
             img = self.transform(img)
-        # Subscribe the path with the "processed" image
-        my_item["image"] = img
+        my_item["image"] = img # Subscribe the path with the "processed" image
         return my_item
-
 
 # _v2
 def  get_data_loader(args):
@@ -355,9 +354,10 @@ def  get_data_loader(args):
   place_to_index_mapping = get_place_to_index_mapping()
   incident_to_index_mapping = get_incident_to_index_mapping()
 
-  # Instantiate normalization for the transform composition
+  # Instantiate normalization for the transform composition (both train/val/test)
   normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
+  # Set up the val/test transformer
   val_transform = transforms.Compose([
               transforms.Resize(416),
               transforms.CenterCrop(384),
@@ -387,20 +387,27 @@ def  get_data_loader(args):
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
     logging.info(f"Currently working on train dataset ..")
     train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform)
-    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform)
+    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform) # For now val_dataset is instantiated as train_dataset even if the weight vesctors are not needed
     
     # Set up the train and val Dataloader from Torch utils
     
-
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
+        batch_size=args.batch_size,
+        shuffle=False, # Already taken random key: shuffle don't needed
+        num_workers=args.workers,
+        pin_memory=True
+    )
+
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
         pin_memory=True
     )
     
-    return train_dataset, val_dataset # In case of training phase
+    return train_loader, val_loader # In case of training phase
 
   return  None, test_dataset # In case of test phase
 
