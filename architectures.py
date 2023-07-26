@@ -56,8 +56,8 @@ class IncidentModel(nn.Module):
         
   def forward(self, input_data):
     backbone_output = self.backbone(input_data) # Backbone from HuggingFace provide a final dense layer with the tanh activation function
-    incident_output = self.incident_head(backbone_output)
-    place_output = self.place_head(backbone_output)
+    incident_output = self.incident_head(backbone_output[0])
+    place_output = self.place_head(backbone_output[0])
 
     return incident_output, place_output # Sigmoid applied on the 'loss computation'
 
@@ -69,7 +69,7 @@ def save_model_architecture(args):
   return
 
 # _v2
-def get_model(args):
+def get_model(args, device):
   """ Function to get the backbone from HuggingFace library and add the two heads
   
   """
@@ -91,17 +91,21 @@ def get_model(args):
   image_tensor = image_tensor[None, :] # Added a dummy dim for the trial 'batch' of one image 
   with torch.no_grad():
     outputs = backbone(image_tensor)
-  logging.info(f"Backbone is working: Output shape {outputs}")
-
+  logging.info(f"Backbone is working: Output shape {outputs[0].size()}   -   Last hidden layer dim {outputs[0].size()[-1]}")
+  last_hidden_layer_dim = outputs[0].size()[-1] # Get hidden layer dim dinamically
+  
   # Create the ensemble
-  model = IncidentModel(backbone, 768, args.num_incidents, args.num_places) # Input features passed statically (to fix)
+  model = IncidentModel(backbone, last_hidden_layer_dim, args.num_incidents, args.num_places)
   logging.info(f"Custom model succesfully loaded\n{model}")
+
+  with torch.no_grad(): # Test the ensemble model
+    outputs = model(image_tensor)
+  
+  logging.info(f"Model is working: Output shape {outputs[0].size()}   -   Last hidden layer dim {outputs[0].size()[-1]}")
   
   # Check for already saved weights (TO FIX)
-  
-  # Check for GPUs availability
-  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
   model.to(device)
+
   return model
 
 # Old function for the 'demo_server.py'

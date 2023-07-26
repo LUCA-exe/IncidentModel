@@ -30,21 +30,25 @@ from transformers import TrainingArguments
 cudnn.benchmark = True
 
 # _v2
-def train_v2(args, train_loader, val_loader, model):
+def train_v2(args, train_loader, val_loader, model, device):
   """ Train phase implementing the custom trainer
 
   """
+  if device != 'cpu':
+    fp16 = True
+  else:
+    fp16 = False
+
   # Init custom args for the Trainer
-  training_args = TrainingArguments(output_dir=f"./{args.arch}",
+  training_args = TrainingArguments(output_dir=f"./model_checkpoints",
                                     per_device_train_batch_size=args.batch_size,
-                                    evaluation_strategy="steps",
+                                    evaluation_strategy="epoch",
                                     num_train_epochs=args.epochs,
-                                    fp16=True,
-                                    save_steps=100,
-                                    eval_steps=100,
-                                    logging_steps=10,
+                                    fp16=fp16,
+                                    save_strategy="epoch",
                                     learning_rate=args.lr,
                                     save_total_limit=2,
+                                    dataloader_num_workers=2, # Working with really small batch of data.. see 'https://chtalhaanwar.medium.com/pytorch-num-workers-a-tip-for-speedy-training-ed127d825db7'
                                     remove_unused_columns=False,
                                     push_to_hub=False,
                                     load_best_model_at_end=True
@@ -57,6 +61,7 @@ def train_v2(args, train_loader, val_loader, model):
                           train_dataset=train_loader,
                           eval_dataset=val_loader
   )
+  train_results = trainer.train()
   return 
 
 
@@ -184,8 +189,11 @@ def main_v2():
     logging.info(f"test_loader (test phase)")
 
   # Set up the model
-  model = get_model(args)
-  train_v2(args, train_loader, val_loader, model)
+  device = args.device # Differentiate the available device with the requested
+  if args.device != 'cpu':
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+  model = get_model(args, device)
+  train_v2(args, train_loader, val_loader, model, device)
 
 def main():
     global best_mean_ap, parser, writer

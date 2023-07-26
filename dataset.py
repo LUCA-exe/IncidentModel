@@ -251,6 +251,7 @@ class IncidentDataset_v2(Dataset):
               # Set internal variables
               self.images_path = images_path
               self.incidents_images = incidents_images # Dict of the images
+              self.transform = transform
 
               logging.info(f"Starting loading images from path '{self.images_path}'")
 
@@ -303,25 +304,26 @@ class IncidentDataset_v2(Dataset):
 
   # Override of the class for the custom dataset (_v2)
   def __len__(self):
-        return len(self.all_data)
+    return len(self.data)
 
   # Override of the class for the custom dataset (_v2)
   def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index to fetch from the list of items
+    """
+    Args:
+
+        index (int): Index to fetch from the list of items
 
         Returns:
             tuple: incident_label_item (list), no_incident_label_item (list)
-        """
-
-        my_item = self.all_data[index]
-        image_name = my_item["image"]
-        img = image_loader(os.path.join(self.images_path, image_name))
-        if self.transform is not None:
-            img = self.transform(img)
-        my_item["image"] = img # Subscribe the path with the "processed" image
-        return my_item
+    """
+    logging.debug(f"INDEX: {index}")
+    my_item = self.data[index]
+    image_name = my_item["image"]
+    img = image_loader(os.path.join(self.images_path, image_name))
+    if self.transform is not None:
+        img = self.transform(img)
+    my_item["image"] = img # Subscribe the path with the "processed" image
+    return my_item
 
 # _v2
 def  get_data_loader(args):
@@ -389,13 +391,15 @@ def  get_data_loader(args):
     train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform, pos_only)
     val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform, pos_only) # For now val_dataset is instantiated as train_dataset even if the weight vesctors are not needed
     
-    # Set up the train and val Dataloader from Torch utils
-    
+    tmp = train_dataset.__getitem__(0)
+    logging.debug(f"PROVA_DEBUG: {tmp}")
+    logging.debug(f"TYPE: {type(tmp)}")
+
+    # Set up the train and val Dataloader from Torch utils.data
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=False, # Already taken random key: shuffle don't needed
-        num_workers=args.workers,
         pin_memory=True
     )
 
@@ -403,7 +407,6 @@ def  get_data_loader(args):
         val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=args.workers,
         pin_memory=True
     )
     
@@ -441,7 +444,6 @@ class IncidentDataset(Dataset):
 
         self.images_path = images_path
         self.use_all = use_all
-        self.transform = transform
 
         self.items = []
         self.all_data = []

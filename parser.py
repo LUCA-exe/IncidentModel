@@ -10,6 +10,11 @@ CHOICES_DATA_USED = [
     "pos_and_neg"
 ]
 
+CHOICES_DEVICE = [
+    "cpu",
+    "gpu"
+]
+
 # Updated for HuggingFace download options
 CHOICES_ARCHITECTURES = [
     "resnet18",
@@ -88,6 +93,13 @@ def get_parser():
     parser.add_argument("--dataset_test",
                         default="data/eccv_test.json",
                         help="Json file with the url/values of images.")
+
+    parser.add_argument('--device',
+                        default="cpu",
+                        type=str,
+                        choices=CHOICES_ACTIVATION,
+                        help='Device to use')
+
 
     parser.add_argument('--num_gpus',
                         default=1,
