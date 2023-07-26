@@ -8,7 +8,7 @@ Helpful resources:
 """
 
 from utils import save_checkpoint, set_up_logging
-from dataset import get_dataset, get_data_loader
+from dataset import get_dataset, get_datasets_v2
 from parser import get_parser, get_postprocessed_args
 from loss import get_loss
 import architectures as architectures
@@ -34,6 +34,9 @@ def train_v2(args, train_loader, val_loader, model, device):
   """ Train phase implementing the custom trainer
 
   """
+  # Bug when tryng to load the data from Dataloader TO FIX
+
+
   if device != 'cpu':
     fp16 = True
   else:
@@ -63,7 +66,6 @@ def train_v2(args, train_loader, val_loader, model, device):
   )
   train_results = trainer.train()
   return 
-
 
 def train(args, train_loader, all_models, optimizer, epoch):
     """
@@ -181,11 +183,11 @@ def main_v2():
   logging.info(f"Args parsed: {args}")
 
   if args.mode == "train":
-    train_loader, val_loader = get_data_loader(args)
+    train_loader, val_loader = get_datasets_v2(args)
     logging.info(f"train_loader and val_loader instatiated (training phase)")
 
   if args.mode == "test":
-    _, test_loader = get_data_loader(args)
+    _, test_loader = get_datasets_v2(args)
     logging.info(f"test_loader (test phase)")
 
   # Set up the model

@@ -295,7 +295,7 @@ class IncidentDataset_v2(Dataset):
     Returns:
         Data item: Built-in Dict that contain all the parsed values
     """
-
+    # TO FIX: Return Tensors NOT ndarray --> for the torch.stack in data collator
     incident_vector, incident_weight_vector = get_vectors(incidents, mapping_incidents, len(mapping_incidents))
     place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
      
@@ -316,7 +316,6 @@ class IncidentDataset_v2(Dataset):
         Returns:
             tuple: incident_label_item (list), no_incident_label_item (list)
     """
-    logging.debug(f"INDEX: {index}")
     my_item = self.data[index]
     image_name = my_item["image"]
     img = image_loader(os.path.join(self.images_path, image_name))
@@ -326,8 +325,8 @@ class IncidentDataset_v2(Dataset):
     return my_item
 
 # _v2
-def  get_data_loader(args):
-  """Main function to return a Dataloader with the customized inner class (IncidentDataset)
+def  get_datasets_v2(args):
+  """Main function to return a Dataset with the customized inner class (IncidentDataset)
 
     Args:
         args (dict): Parsed arguments
@@ -390,27 +389,8 @@ def  get_data_loader(args):
 
     train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform, pos_only)
     val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform, pos_only) # For now val_dataset is instantiated as train_dataset even if the weight vesctors are not needed
-    
-    tmp = train_dataset.__getitem__(0)
-    logging.debug(f"PROVA_DEBUG: {tmp}")
-    logging.debug(f"TYPE: {type(tmp)}")
 
-    # Set up the train and val Dataloader from Torch utils.data
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=False, # Already taken random key: shuffle don't needed
-        pin_memory=True
-    )
-
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        pin_memory=True
-    )
-    
-    return train_loader, val_loader # In case of training phase
+    return train_dataset, val_dataset # In case of training phase
 
   return  None, test_dataset # In case of test phase
 
