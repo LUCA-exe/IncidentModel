@@ -19,17 +19,18 @@ import logging
 from math import floor
 from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization of parsing images values
 
-# Reproducibility of the experiments
-np.random.seed(10)
-
 from utils import (
     get_place_to_index_mapping,
     get_incident_to_index_mapping,
     get_loaded_json_file,
     get_loaded_json_file_v2,
     download_images_from_json,
-    download_images_from_json_parallelized
+    download_images_from_json_parallelized,
+    image_loader
 )
+
+# Reproducibility of the experiments
+np.random.seed(10)
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
@@ -64,13 +65,6 @@ def is_image_file(filename):
     """
     filename_lower = filename.lower()
     return any(filename_lower.endswith(ext) for ext in IMG_EXTENSIONS)
-
-
-def image_loader(filename):
-    with open(filename, 'rb') as f:
-        image = Image.open(f).convert('RGB')
-    return image
-
 
 # _v2
 def get_vectors_v2(data, mapping, vector_len):
@@ -323,7 +317,7 @@ class IncidentDataset_v2(Dataset):
 
         my_item = self.all_data[index]
         image_name = my_item["image"]
-        img = self.image_loader(os.path.join(self.images_path, image_name))
+        img = image_loader(os.path.join(self.images_path, image_name))
         if self.transform is not None:
             img = self.transform(img)
         my_item["image"] = img # Subscribe the path with the "processed" image
@@ -386,8 +380,14 @@ def  get_data_loader(args):
     val_dict = dict((k, train_val_dict[k]) for k in val_keys)
     logging.info(f"Images name/values correctly loaded: train {len(train_dict.keys())} samples   val {len(val_dict.keys())} samples")
     logging.info(f"Currently working on train dataset ..")
-    train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform)
-    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform) # For now val_dataset is instantiated as train_dataset even if the weight vesctors are not needed
+
+    if args.examples == "pos_and_neg": # Checking the image examples to use
+      pos_only = False
+    else:
+      pos_only = True
+
+    train_dataset = IncidentDataset_v2(args.images_path, train_dict, place_to_index_mapping, incident_to_index_mapping, train_transform, pos_only)
+    val_dataset = IncidentDataset_v2(args.images_path, val_dict, place_to_index_mapping, incident_to_index_mapping, val_transform, pos_only) # For now val_dataset is instantiated as train_dataset even if the weight vesctors are not needed
     
     # Set up the train and val Dataloader from Torch utils
     
@@ -441,6 +441,7 @@ class IncidentDataset(Dataset):
 
         self.images_path = images_path
         self.use_all = use_all
+        self.transform = transform
 
         self.items = []
         self.all_data = []
@@ -519,7 +520,7 @@ class IncidentDataset(Dataset):
 
         my_item = list(self.all_data[index])
         image_name = my_item[0]
-        img = self.image_loader(os.path.join(self.images_path, image_name))
+        img = image_loader(os.path.join(self.images_path, image_name))
         if self.transform is not None:
             img = self.transform(img)
         my_item[0] = img

@@ -17,6 +17,7 @@ from pathlib import Path
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed # Parallelization 
 from itertools import islice
+from PIL import Image
 
 # Use th old version from now.. No -v2 available
 def get_place_to_index_mapping():
@@ -72,6 +73,13 @@ def save_checkpoint(state,
 def get_loaded_json_file(path):
     with open(path, "r") as fp:
         return json.load(fp)
+
+
+# Image loader used (check if there is a better options ..)
+def image_loader(filename):
+    with open(filename, 'rb') as f:
+        image = Image.open(f).convert('RGB')
+    return image
 
 # _v2
 def get_loaded_json_file_v2(path):

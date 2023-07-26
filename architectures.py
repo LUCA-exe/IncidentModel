@@ -23,8 +23,18 @@ import timm
 import tensorflow as tf
 from transformers import Trainer, ViTConfig, ViTModel
 import logging
+from utils import image_loader
 
-# same loader used during training
+# _v2 Compose used for trial of the backbone/ensemble 
+transform = transforms.Compose([
+            transforms.RandomResizedCrop(224), # Dimension of the transformer input required
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+        ])
+
+# Old loader used during training (deprecated)
 inference_loader = transforms.Compose([
     transforms.Resize((416, 416)),
     transforms.CenterCrop(384),
@@ -64,25 +74,34 @@ def get_model(args):
   
   """
   if args.arch == "google_vit_b_16":
-
     if args.load_arch_path != "None":
       # Check if the custom architecture config file 'actually' exist
       if os.path.exists(args.load_arch_path):
         backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config=args.load_arch_path)
-      else:
-        logging.debug(f"Can't find the architecture path: {args.load_arch_path} - load the default model config")
-        backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config = ViTConfig())
-    
-    # Customize the architecure from the default pre-trained model
-    backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
-    logging.info(f"Backbone {args.arch} succefully loaded (from HuggingFace)")
-    logging.debug(backbone)
-    # Create the ensemble
-    model = IncidentModel(backbone, 768, args.num_incidents, args.num_places) # Input features passed statically (to fix)
-    logging.info(f"Custom model succesfully loaded\n{model}")
-    
-    # Check for already saved weights !!!
-      
+    else: # Load the predefined optimal tranformer config
+      logging.debug(f"Can't find the architecture path: {args.load_arch_path} - load the default model config.")
+      backbone = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k", config = ViTConfig())
+  
+  logging.info(f"Backbone {args.arch} succefully loaded (from HuggingFace)")
+  logging.debug(f"Backbone architecture: \n{backbone}") 
+
+  # Test the backbone
+  image = image_loader(args.trial_image)
+  image_tensor = transform(image)
+  image_tensor = image_tensor[None, :] # Added a dummy dim for the trial 'batch' of one image 
+  with torch.no_grad():
+    outputs = backbone(image_tensor)
+  logging.info(f"Backbone is working: Output shape {outputs}")
+
+  # Create the ensemble
+  model = IncidentModel(backbone, 768, args.num_incidents, args.num_places) # Input features passed statically (to fix)
+  logging.info(f"Custom model succesfully loaded\n{model}")
+  
+  # Check for already saved weights (TO FIX)
+  
+  # Check for GPUs availability
+  device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+  model.to(device)
   return model
 
 # Old function for the 'demo_server.py'
