@@ -20,6 +20,13 @@ def data_collator(batch):
           'places_weights': torch.stack([x['places_weight'] for x in batch])
         }
 
+# _v2 Called by 'evaluate' of the Trainer (TO FIX)
+def compute_metrics(p):
+  """ Return a dictionary string to metric values
+  
+  """
+  return 
+
 # _v2 
 class CustomTrainer(Trainer): # NOTE: Check for arguments on the Trainer args instead of override the classes for custom behaviour!
   """ Custom trainer (subclassed from Trainer original class)
