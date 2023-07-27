@@ -39,8 +39,10 @@ def train_v2(args, train_loader, val_loader, model, device):
 
   if device != 'cpu':
     fp16 = True
+    optim = 'adamw_torch_fused'
   else:
     fp16 = False
+    optim = 'adamw_torch'
 
   # Init custom args for the Trainer
   training_args = TrainingArguments(output_dir=f"./model_checkpoints",
@@ -55,7 +57,9 @@ def train_v2(args, train_loader, val_loader, model, device):
                                     remove_unused_columns=False,
                                     push_to_hub=False,
                                     load_best_model_at_end=True,
-                                    prediction_loss_only = False
+                                    prediction_loss_only = False,
+                                    optim=optim,
+                                    label_names=['incidents_targets', 'incidents_targets', 'incidents_weights', 'places_weights']
   )
 
   # Initiate the custom trainer
