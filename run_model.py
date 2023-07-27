@@ -62,7 +62,8 @@ def train_v2(args, train_loader, val_loader, model, device):
                           args=training_args,
                           data_collator=data_collator,
                           train_dataset=train_loader,
-                          eval_dataset=val_loader
+                          eval_dataset=val_loader,
+                          device=device
   )
   train_results = trainer.train()
   return 

@@ -22,9 +22,14 @@ def data_collator(batch):
 
 # _v2
 class CustomTrainer(Trainer):
-  """ Custom trainer
+  """ Custom trainer (subclassed from Trainer original class)
   
   """
+  def __init__(self, device, model, args, data_collator, train_dataset, eval_dataset): # Customize the Trainer with more internal variables
+    super(CustomTrainer, self).__init__(model, args, data_collator, train_dataset, eval_dataset)
+    self.device = device
+
+  # Override the default method
   def compute_loss(self, model, inputs, return_outputs=False):
     """ Compute loss: get the batch of data as Dict from the data collator
   
@@ -41,20 +46,38 @@ class CustomTrainer(Trainer):
 
     # Check the formula from the original research
     criterion = nn.BCELoss(reduction='none')
-    incident_loss = torch.sum(
-        criterion(
-            incidents_outputs,
-            incidents_targets.type(torch.FloatTensor).cuda(non_blocking=True)
-        ) * incidents_weights, dim=1) # to shape [B]
-    
-    incident_loss = incident_loss.mean()
 
-    place_loss = torch.sum(
+    if self.device == "cpu":
+
+      incident_loss = torch.sum(
+
         criterion(
-            places_outputs,
-            places_targets.type(torch.FloatTensor).cuda(non_blocking=True)
+          incidents_outputs,
+          incidents_targets
+        ) * incidents_weights, dim=1) # to shape [B] 
+
+      place_loss = torch.sum(
+        criterion(
+          places_outputs,
+          places_targets
         ) * places_weights, dim=1)
+    else:
+      incident_loss = torch.sum(
+
+        criterion(
+          incidents_outputs,
+          incidents_targets.cuda(non_blocking=True)
+        ) * incidents_weights, dim=1) # to shape [B] 
+
+      place_loss = torch.sum(
+        criterion(
+          places_outputs,
+          places_targets.cuda(non_blocking=True)
+        ) * places_weights, dim=1)
+
+    
     place_loss = place_loss.mean()
+    incident_loss = incident_loss.mean()
 
     loss = incident_loss + place_loss
     # Following the standard format from HuggingFace library

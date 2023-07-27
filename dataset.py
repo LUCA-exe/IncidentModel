@@ -268,6 +268,7 @@ class IncidentDataset_v2(Dataset):
                   job_completed += 1
                   # Load the mapped/loaded image values in final list
                   item = future.result()
+
                   # For modularity It is added the 'pos_only' option for the training phase
                   if pos_only: # save the item if it contains at least one postive label for incident
                     if sum(item[2]) > 0:
@@ -302,7 +303,11 @@ class IncidentDataset_v2(Dataset):
     place_vector, place_weight_vector = get_vectors(places, mapping_places, len(mapping_places))
      
     # Parsed item of the images: return a Dict as standard in the HuggingFace documentation
-    return {'image':file_path, 'incidents_target':incident_vector, 'places_target':place_vector, 'incidents_weight':incident_weight_vector, 'places_weight':place_weight_vector}
+    return {'image':file_path, \
+            'incidents_target':torch.from_numpy(incident_vector), \
+            'places_target':torch.from_numpy(place_vector), \
+            'incidents_weight':torch.from_numpy(incident_weight_vector), \
+            'places_weight':torch.from_numpy(place_weight_vector)}
 
   # Override of the class for the custom dataset (_v2)
   def __len__(self):
@@ -357,7 +362,7 @@ def  get_datasets_v2(args):
   # Set up the val/test transformer
   val_transform = transforms.Compose([
               transforms.Resize(416),
-              transforms.CenterCrop(384),
+              transforms.CenterCrop(224),
               transforms.ToTensor(),
               normalize
               ])
@@ -367,7 +372,7 @@ def  get_datasets_v2(args):
     
     # Set up the train transformer
     train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(384),
+            transforms.RandomResizedCrop(224), # Set statically, try to get the initial dim dinamically (TO FIX)
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             normalize

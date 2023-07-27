@@ -130,6 +130,23 @@ def set_up_logging():
   
   return
 
+# _v2 
+def check_image(image_path):
+  """Try to open the image in the folder
+
+    Args:
+        image_path (str): Path of the donwloaded image
+
+    Return:
+        bool: True if the image can actually be opened from the folder
+    """
+  try:
+      Image.open(image_path)
+      return True
+  except:
+      os.remove(image_path) # Remove the alredy downloaded image
+      return False
+
 # _v2 - Modular function to be used either for classic or parallelized implementaion
 def download_image(item, folder_path):
 
@@ -147,13 +164,19 @@ def download_image(item, folder_path):
       image_name = item[0] # Key of the dict (name of the images)
       values = item[1] # Values on the dict (dict with url/multi-labels)
       response = requests.get(values['url'], timeout=3)
-      response.raise_for_status()
+      response.raise_for_status() # It is used? (TO FIX)
       image_name = image_name.replace("/", "_")
       file_path = os.path.join(folder_path, image_name)
       with open(file_path, 'wb') as file:
           file.write(response.content)
       print("Downloaded image:", image_name)
-      return image_name, values  # Return the original data item and the renamed keys
+
+      # Even if donwloaded correctly and with the right extension, the image can be corrupt ..
+      if check_image(file_path):
+        return image_name, values  # Return the original data item and the renamed keys
+      else:
+        return None, None
+
   except requests.exceptions.RequestException as e:
       print("Error:", str(e))
       # Case of "problematic" scraping
