@@ -264,7 +264,7 @@ def download_images_from_json_parallelized(file_path="data/multi_label_train.jso
   logging.info(f"Start parallelized downloads of images in {folder_path}")
   with open(file_path, "rb") as f:
     data = orjson.loads(f.read())
-    data = take(200, data.items()) # DEBUG purpose... just take N items
+    data = take(50, data.items()) # DEBUG purpose... just take N items
     cleaned_data = {} # New "cleaned" json file to save
 
     # Start parallelization

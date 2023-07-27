@@ -56,8 +56,8 @@ class IncidentModel(nn.Module):
         
   def forward(self, input_data):
     backbone_output = self.backbone(input_data) # Backbone from HuggingFace provide a final dense layer with the tanh activation function
-    incident_output = self.incident_head(backbone_output[0])
-    place_output = self.place_head(backbone_output[0])
+    incident_output = self.incident_head(backbone_output.to_tuple()[1])
+    place_output = self.place_head(backbone_output.to_tuple()[1])
 
     return incident_output, place_output # Sigmoid applied on the 'loss computation'
 
@@ -91,7 +91,7 @@ def get_model(args, device):
   image_tensor = image_tensor[None, :] # Added a dummy dim for the trial 'batch' of one image 
   with torch.no_grad():
     outputs = backbone(image_tensor)
-  logging.info(f"Backbone is working: Output shape {outputs[0].size()}   -   Last hidden layer dim {outputs[0].size()[-1]}")
+  logging.info(f"Backbone is working: Output shape {outputs.to_tuple()[0].size()}   -   Last hidden layer dim {outputs.to_tuple()[1].size()[-1]}")
   last_hidden_layer_dim = outputs[0].size()[-1] # Get hidden layer dim dinamically
   
   # Create the ensemble

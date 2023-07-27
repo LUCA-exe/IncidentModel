@@ -13,15 +13,15 @@ def data_collator(batch):
   """ Custom data_collator to form a batch of data for the modified compute_loss
   
   """
-  return {'images': torch.stack([x['image'] for x in batch]),
+  return {'pixel_values': torch.stack([x['image'] for x in batch]),
           'incidents_targets': torch.stack([x['incidents_target'] for x in batch]),
           'places_targets': torch.stack([x['places_target'] for x in batch]),
           'incidents_weights': torch.stack([x['incidents_weight'] for x in batch]),
           'places_weights': torch.stack([x['places_weight'] for x in batch])
         }
 
-# _v2
-class CustomTrainer(Trainer):
+# _v2 
+class CustomTrainer(Trainer): # NOTE: Check for arguments on the Trainer args instead of override the classes for custom behaviour!
   """ Custom trainer (subclassed from Trainer original class)
   
   """
@@ -29,7 +29,7 @@ class CustomTrainer(Trainer):
     super(CustomTrainer, self).__init__(model, args, data_collator, train_dataset, eval_dataset)
     self.device = device
 
-  # Override the default method
+  # Override
   def compute_loss(self, model, inputs, return_outputs=False):
     """ Compute loss: get the batch of data as Dict from the data collator
   
@@ -37,7 +37,7 @@ class CustomTrainer(Trainer):
     # Parse the data provided by the data collator Dict (in batch)
     incidents_targets, places_targets = inputs["incidents_targets"], inputs["places_targets"]
     incidents_weights, places_weights = inputs["incidents_weights"], inputs["places_weights"]
-    incidents_outputs, places_outputs = model(inputs["images"])
+    incidents_outputs, places_outputs = model(inputs["pixel_values"])
 
     activation = nn.Sigmoid() # Instantiate the sigmoid layer
 
@@ -50,38 +50,55 @@ class CustomTrainer(Trainer):
     if self.device == "cpu":
 
       incident_loss = torch.sum(
-
         criterion(
           incidents_outputs,
-          incidents_targets
+          incidents_targets.type(torch.FloatTensor)
         ) * incidents_weights, dim=1) # to shape [B] 
 
       place_loss = torch.sum(
         criterion(
           places_outputs,
-          places_targets
+          places_targets.type(torch.FloatTensor)
         ) * places_weights, dim=1)
+
     else:
-      incident_loss = torch.sum(
 
+      incident_loss = torch.sum(
         criterion(
           incidents_outputs,
-          incidents_targets.cuda(non_blocking=True)
+          incidents_targets.type(torch.FloatTensor).cuda(non_blocking=True)
         ) * incidents_weights, dim=1) # to shape [B] 
 
       place_loss = torch.sum(
         criterion(
           places_outputs,
-          places_targets.cuda(non_blocking=True)
+          places_targets.type(torch.FloatTensor).cuda(non_blocking=True)
         ) * places_weights, dim=1)
 
-    
     place_loss = place_loss.mean()
     incident_loss = incident_loss.mean()
 
     loss = incident_loss + place_loss
     # Following the standard format from HuggingFace library
     return (loss, (incidents_outputs, places_outputs)) if return_outputs else loss
+
+
+  
+  # Override: https://github.com/huggingface/transformers/blob/v4.31.0/src/transformers/trainer.py#L3260
+  def prediction_step(self, model, inputs, prediction_loss_only: bool):
+
+    with torch.no_grad():
+      loss = None
+      with self.compute_loss_context_manager():
+        outputs = model(**inputs)
+                    
+    if prediction_loss_only:
+      return (loss, None, None)
+
+
+    return (loss, logits, labels)
+
+
 
 def get_loss(args,
              incident_output,

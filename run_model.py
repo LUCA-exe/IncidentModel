@@ -54,7 +54,8 @@ def train_v2(args, train_loader, val_loader, model, device):
                                     dataloader_num_workers=2, # Working with really small batch of data.. see 'https://chtalhaanwar.medium.com/pytorch-num-workers-a-tip-for-speedy-training-ed127d825db7'
                                     remove_unused_columns=False,
                                     push_to_hub=False,
-                                    load_best_model_at_end=True
+                                    load_best_model_at_end=True,
+                                    prediction_loss_only = False
   )
 
   # Initiate the custom trainer
