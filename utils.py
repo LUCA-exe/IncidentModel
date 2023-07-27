@@ -75,11 +75,16 @@ def get_loaded_json_file(path):
         return json.load(fp)
 
 
-# Image loader used (check if there is a better options ..)
+# Image loader used (check if there is a better options ..) - Sometime it gives buffer error (probably cause: 'with ...')
 def image_loader(filename):
     with open(filename, 'rb') as f:
         image = Image.open(f).convert('RGB')
     return image
+
+# _v2
+def image_loader_v2(filename):
+  image = Image.open(filename).convert('RGB')
+  return image
 
 # _v2
 def get_loaded_json_file_v2(path):

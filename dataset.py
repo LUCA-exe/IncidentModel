@@ -26,7 +26,8 @@ from utils import (
     get_loaded_json_file_v2,
     download_images_from_json,
     download_images_from_json_parallelized,
-    image_loader
+    image_loader, # Deprecated
+    image_loader_v2
 )
 
 # Reproducibility of the experiments
@@ -248,10 +249,11 @@ class IncidentDataset_v2(Dataset):
               threads = 10,
               keep_track=10):
 
-              # Set internal variables
+              # Set internal variables (IMPORTANT: Tranformer and Image loader)
               self.images_path = images_path
               self.incidents_images = incidents_images # Dict of the images
               self.transform = transform
+              self.image_loader = image_loader_v2
 
               logging.info(f"Starting loading images from path '{self.images_path}'")
 
@@ -318,7 +320,7 @@ class IncidentDataset_v2(Dataset):
     """
     my_item = self.data[index]
     image_name = my_item["image"]
-    img = image_loader(os.path.join(self.images_path, image_name))
+    img = self.image_loader(os.path.join(self.images_path, image_name))
     if self.transform is not None:
         img = self.transform(img)
     my_item["image"] = img # Subscribe the path with the "processed" image
