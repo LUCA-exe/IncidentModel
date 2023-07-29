@@ -30,7 +30,7 @@ from transformers import TrainingArguments
 cudnn.benchmark = True
 
 # _v2
-def train_v2(args, train_loader, val_loader, model, device):
+def train_v2(args, train_loader, val_loader, model, device, log_file):
   """ Train phase implementing the custom trainer
 
   """
@@ -39,13 +39,14 @@ def train_v2(args, train_loader, val_loader, model, device):
 
   if device != 'cpu':
     fp16 = True
-    optim = 'adamw_torch_fused'
+    optim = 'adamw_torch_fused' # Should be paramtrized..
   else:
     fp16 = False
     optim = 'adamw_torch'
 
   # Init custom args for the Trainer
   training_args = TrainingArguments(output_dir=f"./model_checkpoints",
+                                    #logging_dir=log_file, # Try to use the default of the Trainer (not use already istantiated file ..)
                                     per_device_train_batch_size=args.batch_size,
                                     evaluation_strategy="epoch",
                                     num_train_epochs=args.epochs,
@@ -59,7 +60,9 @@ def train_v2(args, train_loader, val_loader, model, device):
                                     load_best_model_at_end=True,
                                     prediction_loss_only = False,
                                     optim=optim,
+                                    #include_inputs_for_metrics=True, # It should be already ok, defined the labels for the compute metrics belowe
                                     label_names=['incidents_targets', 'incidents_targets', 'incidents_weights', 'places_weights']
+                                    
   )
 
   # Initiate the custom trainer
@@ -185,7 +188,7 @@ writer = None
 # _v2 - start the 'refactoring'
 def main_v2():
   args = parser.parse_args()
-  set_up_logging()
+  log_file = set_up_logging()
   logging.info(f"Args parsed: {args}")
 
   if args.mode == "train":
@@ -201,7 +204,7 @@ def main_v2():
   if args.device != 'cpu':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
   model = get_model(args, device)
-  train_v2(args, train_loader, val_loader, model, device)
+  train_v2(args, train_loader, val_loader, model, device, log_file)
 
 def main():
     global best_mean_ap, parser, writer

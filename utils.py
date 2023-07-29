@@ -101,8 +101,10 @@ def save_dict_to_json(dictionary, file_path):
 # _v2
 def set_up_logging():
   """Util function to set up the logging
-  
-    """ 
+
+    Return:
+        FilePath (str): Path of the already instatianted logging file
+  """ 
   log_folder_path = Path("Logs")
   if not log_folder_path.exists():
     log_folder_path.mkdir(parents=True)
@@ -128,7 +130,7 @@ def set_up_logging():
   except AssertionError as error:
     print(f"Can't create log file >>> Error: {error}")
   
-  return
+  return file_path_str # Return to pass the file to the Trainer class
 
 # _v2 
 def check_image(image_path):
